@@ -21,3 +21,7 @@ Execute in the build directory you created above:
     $ make amalgamate
 
 Now the amalgamation (`mqtt.c` and `mqtt.h`) is found in `<project_root>/amalgamation` directory.
+
+# Tools
+
+There are publish/subscribe tools included in the `tools` directory and they are built by default.
