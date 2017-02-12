@@ -1,0 +1,51 @@
+ADD_LIBRARY(mqtt STATIC
+    client.c
+    deserialize.c
+    misc.c
+    packet.c
+    serialize.c
+    socket.c
+    socketstream.c
+    stream.c
+    stream_mqtt.c
+    stringbuf.c
+)
+
+IF(MSVC)
+ELSEIF(CMAKE_COMPILER_IS_GNUCC OR (CMAKE_C_COMPILER_ID MATCHES Clang))
+    TARGET_COMPILE_OPTIONS(mqtt PRIVATE -Wall -Wextra $<$<CONFIG:Debug>:-O0>)
+ENDIF()
+
+SET(MQTT_LOG_LEVEL "" CACHE STRING
+    "(DEBUG|INFO|WARNING|ERROR) or leave empty for no logging")
+
+IF(MQTT_LOG_LEVEL)
+    TARGET_COMPILE_DEFINITIONS(mqtt PRIVATE
+        $<$<CONFIG:Debug>:LOG_LEVEL=LOG_LEVEL_${MQTT_LOG_LEVEL}>)
+ENDIF()
+
+OPTION(MQTT_STREAM_HEXDUMP_READ "Hexdump all read data to stdout" OFF)
+OPTION(MQTT_STREAM_HEXDUMP_WRITE "Hexdump all written data to stdout" OFF)
+
+IF(MQTT_STREAM_HEXDUMP_READ)
+    TARGET_COMPILE_DEFINITIONS(mqtt PRIVATE STREAM_HEXDUMP_READ)
+ENDIF()
+
+IF(MQTT_STREAM_HEXDUMP_WRITE)
+    TARGET_COMPILE_DEFINITIONS(mqtt PRIVATE STREAM_HEXDUMP_WRITE)
+ENDIF()
+
+TARGET_INCLUDE_DIRECTORIES(mqtt INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+OPTION(MQTT_AMALGAMATE "Create an amalgamation of all the sources" OFF)
+IF(MQTT_AMALGAMATE)
+    SET(AMALGAMATION_DIR ${PROJECT_SOURCE_DIR}/amalgamation CACHE PATH "Where to output the amalgamation")
+    SET(AMALGAMATION_TOOL ${PROJECT_SOURCE_DIR}/tools/amalgamate.py)
+    FIND_PROGRAM(PYTHON python)
+    ADD_CUSTOM_COMMAND(OUTPUT ${AMALGAMATION_DIR}/mqtt.c
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${AMALGAMATION_DIR}
+        COMMAND ${PYTHON} ${AMALGAMATION_TOOL} ${AMALGAMATION_DIR}/mqtt.c
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/mqtt.h ${AMALGAMATION_DIR}
+    )
+    ADD_CUSTOM_TARGET(amalgamate DEPENDS ${AMALGAMATION_DIR}/mqtt.c)
+ENDIF()

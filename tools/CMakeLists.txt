@@ -1,0 +1,7 @@
+ADD_LIBRARY(getopt OBJECT getopt.c)
+
+ADD_EXECUTABLE(pub pub.c $<TARGET_OBJECTS:getopt>)
+TARGET_LINK_LIBRARIES(pub mqtt)
+
+ADD_EXECUTABLE(sub sub.c $<TARGET_OBJECTS:getopt>)
+TARGET_LINK_LIBRARIES(sub mqtt)
