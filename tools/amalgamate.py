@@ -13,7 +13,6 @@ sources = (
     'stringbuf.c',
     'stream.c',
     'socketstream.c',
-    'stringstream.c',
     'stream_mqtt.c',
     'socket.c',
     'packet.c',
