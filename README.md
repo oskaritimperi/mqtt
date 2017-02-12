@@ -20,8 +20,20 @@ Execute in the build directory you created above:
     $ cmake -DMQTT_AMALGAMATE=ON .
     $ make amalgamate
 
-Now the amalgamation (`mqtt.c` and `mqtt.h`) is found in `<project_root>/amalgamation` directory.
+Now the amalgamation (`mqtt.c` and `mqtt.h`) is found in
+`<project_root>/amalgamation` directory.
+
+# Dumping sent/received data
+
+Define `STREAM_HEXDUMP_READ` and `STREAM_HEXDUMP_WRITE` to make the library dump
+read or written written data respectively to stdout. Nice for debugging.
+
+# Logging
+
+Define `LOG_LEVEL` to one of `DEBUG`, `INFO`, `WARNING` or `ERROR` to make the
+library output logging information.
 
 # Tools
 
-There are publish/subscribe tools included in the `tools` directory and they are built by default.
+There are publish/subscribe tools included in the `tools` directory and they are
+built by default.
