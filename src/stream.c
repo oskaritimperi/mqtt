@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 
-// htons, ntohs
+/* htons, ntohs */
 #include <arpa/inet.h>
 
 #define STREAM_CHECK_OP(stream, op) \
@@ -27,8 +27,9 @@ int StreamClose(Stream *stream)
 
 int64_t StreamRead(void *ptr, size_t size, Stream *stream)
 {
+    int64_t rv;
     STREAM_CHECK_OP(stream, read);
-    int64_t rv = stream->ops->read(ptr, size, stream);
+    rv = stream->ops->read(ptr, size, stream);
 #if defined(STREAM_HEXDUMP_READ)
     if (rv >= 0)
     {

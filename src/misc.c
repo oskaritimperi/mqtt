@@ -17,7 +17,7 @@ int64_t GetCurrentTime()
 }
 #endif
 
-// https://gist.github.com/ccbrown/9722406
+/* https://gist.github.com/ccbrown/9722406 */
 void DumpHex(const void* data, size_t size) {
     char ascii[17];
     size_t i, j;

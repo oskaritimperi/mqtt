@@ -45,9 +45,11 @@ size_t StringBufAvailable(StringBuf *buf)
 
 int StringBufGrow(StringBuf *buf, size_t size)
 {
+    size_t newSize;
+    char *ptr;
     assert(buf != NULL);
-    size_t newSize = buf->size + size;
-    char *ptr = realloc(buf->data, newSize+1);
+    newSize = buf->size + size;
+    ptr = realloc(buf->data, newSize+1);
     if (!ptr)
         return -1;
     buf->data = ptr;

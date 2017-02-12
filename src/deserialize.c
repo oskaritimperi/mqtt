@@ -50,7 +50,7 @@ static int MqttPacketSubAckDeserialize(MqttPacketSubAck **packet, Stream *stream
     if (StreamReadRemainingLength(&remainingLength, stream) == -1)
         return -1;
 
-    // 2 bytes for packet id and 1 byte for single return code
+    /* 2 bytes for packet id and 1 byte for single return code */
     if (remainingLength != 3)
         return -1;
 

@@ -342,8 +342,8 @@ int MqttClientRunOnce(MqttClient *client)
         FD_SET(client->stream.sock, &wfd);
     }
 
-    // TODO: break select when queuing packets (need to protect queue with mutex
-    // to allow queuing packets from another thread)
+    /* TODO: break select when queuing packets (need to protect queue with
+       mutex to allow queuing packets from another thread) */
 
     memset(&tv, 0, sizeof(tv));
     tv.tv_sec = client->keepAlive;
@@ -749,7 +749,6 @@ static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packe
         if (pubRec)
         {
             LOG_DEBUG("resending PUBREC id:%d", MqttPacketId(packet));
-            // MqttPacketWithId *pubRec = (MqttPacketWithId *) pubRecNode->packet;
             MqttClientQueuePacket(client, pubRec);
             MqttPacketFree((MqttPacket *) packet);
             return;

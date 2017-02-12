@@ -55,7 +55,7 @@ static size_t MqttPacketPublishGetRemainingLength(const MqttPacketPublish *packe
 
     remainingLength += MqttStringLengthSerialized(&packet->topicName);
 
-    // Packet id
+    /* Packet id */
     if (MqttPacketPublishQos(packet) == 1 || MqttPacketPublishQos(packet) == 2)
     {
         remainingLength += 2;

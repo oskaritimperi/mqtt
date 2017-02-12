@@ -5,7 +5,7 @@
 
 #include <arpa/inet.h>
 
-// close
+/* close */
 #include <unistd.h>
 
 static int SocketStreamClose(Stream *base)
@@ -27,10 +27,10 @@ static int64_t SocketStreamRead(void *ptr, size_t size, Stream *stream)
     {
         char *p = ((char *) ptr) + received;
         ssize_t rv = recv(ss->sock, p, size - received, 0);
-        // Error
+        /* Error */
         if (rv == -1)
             return -1;
-        // TODO: Closed?
+        /* TODO: Closed? */
         if (rv == 0)
             break;
         received += (size_t) rv;
