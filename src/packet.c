@@ -78,7 +78,32 @@ MqttPacket *MqttPacketWithIdNew(int type, uint16_t id)
 
 void MqttPacketFree(MqttPacket *packet)
 {
-    /* TODO: implement MqttPacketFree */
+    if (MqttPacketType(packet) == MqttPacketTypeConnect)
+    {
+        MqttPacketConnect *p = (MqttPacketConnect *) packet;
+        StringBufDeinit(&p->clientId);
+        StringBufDeinit(&p->willTopic);
+        StringBufDeinit(&p->willMessage);
+        StringBufDeinit(&p->userName);
+        StringBufDeinit(&p->password);
+    }
+    else if (MqttPacketType(packet) == MqttPacketTypePublish)
+    {
+        MqttPacketPublish *p = (MqttPacketPublish *) packet;
+        StringBufDeinit(&p->topicName);
+        StringBufDeinit(&p->message);
+    }
+    else if (MqttPacketType(packet) == MqttPacketTypeSubscribe)
+    {
+        MqttPacketSubscribe *p = (MqttPacketSubscribe *) packet;
+        StringBufDeinit(&p->topicFilter);
+    }
+    else if (MqttPacketType(packet) == MqttPacketTypeUnsubscribe)
+    {
+        MqttPacketUnsubscribe *p = (MqttPacketUnsubscribe *) packet;
+        StringBufDeinit(&p->topicFilter);
+    }
+    free(packet);
 }
 
 int MqttPacketHasId(const MqttPacket *packet)
