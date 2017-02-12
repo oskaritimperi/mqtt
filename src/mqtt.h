@@ -91,6 +91,9 @@ void MqttClientSetMaxMessagesInflight(MqttClient *client, int max);
 
 void MqttClientSetMaxQueuedMessages(MqttClient *client, int max);
 
+int MqttClientSetWill(MqttClient *client, const char *topic, const void *msg,
+                      size_t size, int qos, int retain);
+
 #if defined(__cplusplus)
 }
 #endif

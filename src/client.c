@@ -72,6 +72,10 @@ struct MqttClient
     int maxQueued;
     /* 1 if PINGREQ is sent and we are waiting for PINGRESP, 0 otherwise */
     int pingSent;
+    StringBuf willTopic;
+    StringBuf willMessage;
+    int willQos;
+    int willRetain;
 };
 
 enum MessageState
@@ -275,6 +279,24 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
     {
         free(packet);
         return -1;
+    }
+
+    if (client->willTopic.data != NULL)
+    {
+        packet->connectFlags |= 0x04;
+
+        memcpy(&packet->willTopic, &client->willTopic,
+               sizeof(packet->willTopic));
+
+        memset(&client->willTopic, 0, sizeof(packet->willTopic));
+
+        memcpy(&packet->willMessage, &client->willMessage,
+               sizeof(packet->willMessage));
+
+        memset(&client->willMessage, 0, sizeof(packet->willMessage));
+
+        packet->connectFlags |= (client->willQos & 3) << 3;
+        packet->connectFlags |= (client->willRetain & 1) << 5;
     }
 
     MqttClientQueuePacket(client, &packet->base);
@@ -574,6 +596,33 @@ void MqttClientSetMaxQueuedMessages(MqttClient *client, int max)
 {
     assert(client != NULL);
     client->maxQueued = max;
+}
+
+int MqttClientSetWill(MqttClient *client, const char *topic, const void *msg,
+                      size_t size, int qos, int retain)
+{
+    assert(client != NULL);
+
+    if (client->stream.sock != -1)
+    {
+        LOG_ERROR("MqttClientSetWill must be called before MqttClientConnect");
+        return -1;
+    }
+
+    if (StringBufInitFromCString(&client->willTopic, topic, -1) == -1)
+    {
+        return -1;
+    }
+
+    if (StringBufInitFromData(&client->willMessage, msg, size) == -1)
+    {
+        return -1;
+    }
+
+    client->willQos = qos;
+    client->willRetain = retain;
+
+    return 0;
 }
 
 static void MqttClientQueuePacket(MqttClient *client, MqttPacket *packet)
