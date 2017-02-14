@@ -1,3 +1,4 @@
+#include "config.h"
 #include "mqtt.h"
 #include "packet.h"
 #include "stream.h"
@@ -94,7 +95,7 @@ static int MqttClientRecvPacket(MqttClient *client);
 static uint16_t MqttClientNextPacketId(MqttClient *client);
 static void MqttClientProcessMessageQueue(MqttClient *client);
 
-static inline int MqttClientInflightMessageCount(MqttClient *client)
+static MQTT_INLINE int MqttClientInflightMessageCount(MqttClient *client)
 {
     MqttPacket *packet;
     int queued = 0;
@@ -455,7 +456,7 @@ int MqttClientUnsubscribe(MqttClient *client, const char *topicFilter)
     return MqttPacketId(packet);
 }
 
-static inline int MqttClientOutMessagesLen(MqttClient *client)
+static MQTT_INLINE int MqttClientOutMessagesLen(MqttClient *client)
 {
     MqttPacket *packet;
     int count = 0;

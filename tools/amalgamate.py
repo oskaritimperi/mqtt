@@ -7,6 +7,7 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.join(this_dir, '..', 'src')
 
 sources = (
+    'config.h',
     'queue.h',
     'log.h',
     'misc.c',

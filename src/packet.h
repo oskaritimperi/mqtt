@@ -1,6 +1,8 @@
 #ifndef PACKET_H
 #define PACKET_H
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>

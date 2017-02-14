@@ -1,6 +1,8 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+#include "config.h"
+
 #include <stdlib.h>
 
 int SocketConnect(const char *host, short port);

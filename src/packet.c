@@ -28,7 +28,7 @@ const char *MqttPacketName(int type)
     }
 }
 
-static inline size_t MqttPacketStructSize(int type)
+static MQTT_INLINE size_t MqttPacketStructSize(int type)
 {
     switch (type)
     {

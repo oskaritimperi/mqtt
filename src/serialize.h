@@ -1,6 +1,8 @@
 #ifndef SERIALIZE_H
 #define SERIALIZE_H
 
+#include "config.h"
+
 typedef struct MqttPacket MqttPacket;
 typedef struct Stream Stream;
 

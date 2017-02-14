@@ -14,7 +14,7 @@ typedef int (*MqttPacketSerializeFunc)(const MqttPacket *packet,
 static const struct tagbstring MqttProtocolId = bsStatic("MQTT");
 static const char MqttProtocolLevel  = 0x04;
 
-static inline size_t MqttStringLengthSerialized(const_bstring s)
+static MQTT_INLINE size_t MqttStringLengthSerialized(const_bstring s)
 {
     return 2 + blength(s);
 }

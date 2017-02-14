@@ -1,6 +1,8 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "config.h"
+
 #define LOG_LEVEL_DEBUG 0
 #define LOG_LEVEL_INFO 1
 #define LOG_LEVEL_WARNING 2
@@ -11,7 +13,7 @@
 #else
 #include <stdio.h>
 #include <string.h>
-static inline const char *log_basename(const char *s)
+static MQTT_INLINE const char *log_basename(const char *s)
 {
 #if !defined(_WIN32)
     const char *p = strrchr(s, '/');

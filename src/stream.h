@@ -1,6 +1,8 @@
 #ifndef STREAM_H
 #define STREAM_H
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 
