@@ -24,9 +24,7 @@
 #error define PRId64 for your platform
 #endif
 
-#ifdef __APPLE__
 #include <sys/select.h>
-#endif
 
 TAILQ_HEAD(MessageList, MqttPacket);
 typedef struct MessageList MessageList;
