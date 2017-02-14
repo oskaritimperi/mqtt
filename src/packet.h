@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include "stringbuf.h"
+#include <bstrlib/bstrlib.h>
 
 #include "queue.h"
 
@@ -53,11 +53,11 @@ struct MqttPacketConnect
     MqttPacket base;
     char connectFlags;
     uint16_t keepAlive;
-    StringBuf clientId;
-    StringBuf willTopic;
-    StringBuf willMessage;
-    StringBuf userName;
-    StringBuf password;
+    bstring clientId;
+    bstring willTopic;
+    bstring willMessage;
+    bstring userName;
+    bstring password;
 };
 
 typedef struct MqttPacketConnAck MqttPacketConnAck;
@@ -74,8 +74,8 @@ typedef struct MqttPacketPublish MqttPacketPublish;
 struct MqttPacketPublish
 {
     MqttPacket base;
-    StringBuf topicName;
-    StringBuf message;
+    bstring topicName;
+    bstring message;
     char qos;
     char dup;
     char retain;
@@ -90,7 +90,7 @@ typedef struct MqttPacketSubscribe MqttPacketSubscribe;
 struct MqttPacketSubscribe
 {
     MqttPacket base;
-    StringBuf topicFilter;
+    bstring topicFilter;
     char qos;
 };
 
@@ -107,7 +107,7 @@ typedef struct MqttPacketUnsubscribe MqttPacketUnsubscribe;
 struct MqttPacketUnsubscribe
 {
     MqttPacket base;
-    StringBuf topicFilter;
+    bstring topicFilter;
 };
 
 const char *MqttPacketName(int type);

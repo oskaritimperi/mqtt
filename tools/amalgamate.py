@@ -10,7 +10,7 @@ sources = (
     'queue.h',
     'log.h',
     'misc.c',
-    'stringbuf.c',
+    'lib/bstrlib/bstrlib.c',
     'stream.c',
     'socketstream.c',
     'stream_mqtt.c',

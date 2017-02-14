@@ -1,65 +1,42 @@
 #include "stream_mqtt.h"
-#include "stringbuf.h"
 
 #include <string.h>
 
-int64_t StreamReadMqttString(char **s, size_t *len, Stream *stream)
-{
-    StringBuf buf;
-    int64_t rv;
-
-    if ((rv = StreamReadMqttStringBuf(&buf, stream)) == -1)
-        return -1;
-
-    *s = buf.data;
-    *len = buf.len;
-
-    return rv;
-}
-
-int64_t StreamWriteMqttString(const char *s, int len, Stream *stream)
-{
-    StringBuf buf;
-
-    if (len < 0)
-        len = strlen(s);
-
-    buf.data = (char *) s;
-    buf.len = len;
-
-    return StreamWriteMqttStringBuf(&buf, stream);
-}
-
-int64_t StreamReadMqttStringBuf(struct StringBuf *buf, Stream *stream)
+int64_t StreamReadMqttString(bstring *buf, Stream *stream)
 {
     uint16_t len;
+    bstring result;
 
     if (StreamReadUint16Be(&len, stream) == -1)
         return -1;
 
-    if (StringBufInit(buf, len) == -1)
+    result = bfromcstralloc(len, "");
+
+    if (!result)
         return -1;
 
-    if (StreamRead(buf->data, len, stream) == -1)
+    if (StreamRead(bdata(result), len, stream) == -1)
     {
-        StringBufDeinit(buf);
+        bdestroy(result);
         return -1;
     }
 
-    buf->len = len;
+    result->slen = len;
+
+    *buf = result;
 
     return len+2;
 }
 
-int64_t StreamWriteMqttStringBuf(const struct StringBuf *buf, Stream *stream)
+int64_t StreamWriteMqttString(const_bstring buf, Stream *stream)
 {
-    if (StreamWriteUint16Be(buf->len, stream) == -1)
+    if (StreamWriteUint16Be(blength(buf), stream) == -1)
         return -1;
 
-    if (StreamWrite(buf->data, buf->len, stream) == -1)
+    if (StreamWrite(bdata(buf), blength(buf), stream) == -1)
         return -1;
 
-    return 2 + buf->len;
+    return 2 + blength(buf);
 }
 
 int64_t StreamReadRemainingLength(size_t *remainingLength, Stream *stream)

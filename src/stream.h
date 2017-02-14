@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "stringbuf.h"
-
 #ifndef SEEK_SET
 #define SEEK_SET (-1)
 #endif

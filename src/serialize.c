@@ -1,8 +1,9 @@
 #include "serialize.h"
-#include "stringbuf.h"
 #include "packet.h"
 #include "stream_mqtt.h"
 #include "log.h"
+
+#include <bstrlib/bstrlib.h>
 
 #include <stdlib.h>
 #include <assert.h>
@@ -10,12 +11,12 @@
 typedef int (*MqttPacketSerializeFunc)(const MqttPacket *packet,
                                        Stream *stream);
 
-static const StringBuf MqttProtocolId = StaticStringBuf("MQTT");
+static const struct tagbstring MqttProtocolId = bsStatic("MQTT");
 static const char MqttProtocolLevel  = 0x04;
 
-static inline size_t MqttStringLengthSerialized(const StringBuf *s)
+static inline size_t MqttStringLengthSerialized(const_bstring s)
 {
-    return 2 + s->len;
+    return 2 + blength(s);
 }
 
 static size_t MqttPacketConnectGetRemainingLength(const MqttPacketConnect *packet)
@@ -24,36 +25,36 @@ static size_t MqttPacketConnectGetRemainingLength(const MqttPacketConnect *packe
 
     remainingLength += MqttStringLengthSerialized(&MqttProtocolId) + 1 + 1 + 2;
 
-    remainingLength += MqttStringLengthSerialized(&packet->clientId);
+    remainingLength += MqttStringLengthSerialized(packet->clientId);
 
     if (packet->connectFlags & 0x80)
-        remainingLength += MqttStringLengthSerialized(&packet->userName);
+        remainingLength += MqttStringLengthSerialized(packet->userName);
 
     if (packet->connectFlags & 0x40)
-        remainingLength += MqttStringLengthSerialized(&packet->password);
+        remainingLength += MqttStringLengthSerialized(packet->password);
 
     if (packet->connectFlags & 0x04)
-        remainingLength += MqttStringLengthSerialized(&packet->willTopic) +
-                           MqttStringLengthSerialized(&packet->willMessage);
+        remainingLength += MqttStringLengthSerialized(packet->willTopic) +
+                           MqttStringLengthSerialized(packet->willMessage);
 
     return remainingLength;
 }
 
 static size_t MqttPacketSubscribeGetRemainingLength(const MqttPacketSubscribe *packet)
 {
-    return 2 + MqttStringLengthSerialized(&packet->topicFilter) + 1;
+    return 2 + MqttStringLengthSerialized(packet->topicFilter) + 1;
 }
 
 static size_t MqttPacketUnsubscribeGetRemainingLength(const MqttPacketUnsubscribe *packet)
 {
-    return 2 + MqttStringLengthSerialized(&packet->topicFilter);
+    return 2 + MqttStringLengthSerialized(packet->topicFilter);
 }
 
 static size_t MqttPacketPublishGetRemainingLength(const MqttPacketPublish *packet)
 {
     size_t remainingLength = 0;
 
-    remainingLength += MqttStringLengthSerialized(&packet->topicName);
+    remainingLength += MqttStringLengthSerialized(packet->topicName);
 
     /* Packet id */
     if (MqttPacketPublishQos(packet) == 1 || MqttPacketPublishQos(packet) == 2)
@@ -61,7 +62,7 @@ static size_t MqttPacketPublishGetRemainingLength(const MqttPacketPublish *packe
         remainingLength += 2;
     }
 
-    remainingLength += packet->message.len;
+    remainingLength += blength(packet->message);
 
     return remainingLength;
 }
@@ -155,7 +156,7 @@ static int MqttPacketConnectSerialize(const MqttPacketConnect *packet, Stream *s
     if (MqttPacketBaseSerialize(&packet->base, stream) == -1)
         return -1;
 
-    if (StreamWriteMqttStringBuf(&MqttProtocolId, stream) == -1)
+    if (StreamWriteMqttString(&MqttProtocolId, stream) == -1)
         return -1;
 
     if (StreamWrite(&MqttProtocolLevel, 1, stream) != 1)
@@ -167,27 +168,27 @@ static int MqttPacketConnectSerialize(const MqttPacketConnect *packet, Stream *s
     if (StreamWriteUint16Be(packet->keepAlive, stream) == -1)
         return -1;
 
-    if (StreamWriteMqttStringBuf(&packet->clientId, stream) == -1)
+    if (StreamWriteMqttString(packet->clientId, stream) == -1)
         return -1;
 
     if (packet->connectFlags & 0x04)
     {
-        if (StreamWriteMqttStringBuf(&packet->willTopic, stream) == -1)
+        if (StreamWriteMqttString(packet->willTopic, stream) == -1)
             return -1;
 
-        if (StreamWriteMqttStringBuf(&packet->willMessage, stream) == -1)
+        if (StreamWriteMqttString(packet->willMessage, stream) == -1)
             return -1;
     }
 
     if (packet->connectFlags & 0x80)
     {
-        if (StreamWriteMqttStringBuf(&packet->userName, stream) == -1)
+        if (StreamWriteMqttString(packet->userName, stream) == -1)
             return -1;
     }
 
     if (packet->connectFlags & 0x40)
     {
-        if (StreamWriteMqttStringBuf(&packet->password, stream) == -1)
+        if (StreamWriteMqttString(packet->password, stream) == -1)
             return -1;
     }
 
@@ -199,7 +200,7 @@ static int MqttPacketSubscribeSerialize(const MqttPacketSubscribe *packet, Strea
     if (MqttPacketWithIdSerialize((const MqttPacket *) packet, stream) == -1)
         return -1;
 
-    if (StreamWriteMqttStringBuf(&packet->topicFilter, stream) == -1)
+    if (StreamWriteMqttString(packet->topicFilter, stream) == -1)
         return -1;
 
     if (StreamWrite(&packet->qos, 1, stream) == -1)
@@ -213,7 +214,7 @@ static int MqttPacketUnsubscribeSerialize(const MqttPacketUnsubscribe *packet, S
     if (MqttPacketWithIdSerialize((const MqttPacket *) packet, stream) == -1)
         return -1;
 
-    if (StreamWriteMqttStringBuf(&packet->topicFilter, stream) == -1)
+    if (StreamWriteMqttString(packet->topicFilter, stream) == -1)
         return -1;
 
     return 0;
@@ -224,7 +225,7 @@ static int MqttPacketPublishSerialize(const MqttPacketPublish *packet, Stream *s
     if (MqttPacketBaseSerialize((const MqttPacket *) packet, stream) == -1)
         return -1;
 
-    if (StreamWriteMqttStringBuf(&packet->topicName, stream) == -1)
+    if (StreamWriteMqttString(packet->topicName, stream) == -1)
         return -1;
 
     LOG_DEBUG("qos:%d", MqttPacketPublishQos(packet));
@@ -235,7 +236,7 @@ static int MqttPacketPublishSerialize(const MqttPacketPublish *packet, Stream *s
             return -1;
     }
 
-    if (StreamWrite(packet->message.data, packet->message.len, stream) == -1)
+    if (StreamWrite(bdata(packet->message), blength(packet->message), stream) == -1)
         return -1;
 
     return 0;

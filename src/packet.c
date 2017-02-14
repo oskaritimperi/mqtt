@@ -81,27 +81,27 @@ void MqttPacketFree(MqttPacket *packet)
     if (MqttPacketType(packet) == MqttPacketTypeConnect)
     {
         MqttPacketConnect *p = (MqttPacketConnect *) packet;
-        StringBufDeinit(&p->clientId);
-        StringBufDeinit(&p->willTopic);
-        StringBufDeinit(&p->willMessage);
-        StringBufDeinit(&p->userName);
-        StringBufDeinit(&p->password);
+        bdestroy(p->clientId);
+        bdestroy(p->willTopic);
+        bdestroy(p->willMessage);
+        bdestroy(p->userName);
+        bdestroy(p->password);
     }
     else if (MqttPacketType(packet) == MqttPacketTypePublish)
     {
         MqttPacketPublish *p = (MqttPacketPublish *) packet;
-        StringBufDeinit(&p->topicName);
-        StringBufDeinit(&p->message);
+        bdestroy(p->topicName);
+        bdestroy(p->message);
     }
     else if (MqttPacketType(packet) == MqttPacketTypeSubscribe)
     {
         MqttPacketSubscribe *p = (MqttPacketSubscribe *) packet;
-        StringBufDeinit(&p->topicFilter);
+        bdestroy(p->topicFilter);
     }
     else if (MqttPacketType(packet) == MqttPacketTypeUnsubscribe)
     {
         MqttPacketUnsubscribe *p = (MqttPacketUnsubscribe *) packet;
-        StringBufDeinit(&p->topicFilter);
+        bdestroy(p->topicFilter);
     }
     free(packet);
 }

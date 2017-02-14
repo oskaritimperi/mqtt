@@ -87,12 +87,12 @@ static int MqttPacketPublishDeserialize(MqttPacketPublish **packet, Stream *stre
     if (StreamReadRemainingLength(&remainingLength, stream) == -1)
         return -1;
 
-    if (StreamReadMqttStringBuf(&(*packet)->topicName, stream) == -1)
+    if (StreamReadMqttString(&(*packet)->topicName, stream) == -1)
         return -1;
 
     LOG_DEBUG("remainingLength:%lu", remainingLength);
 
-    payloadSize = remainingLength - (*packet)->topicName.len - 2;
+    payloadSize = remainingLength - blength((*packet)->topicName) - 2;
 
     LOG_DEBUG("qos:%d payloadSize:%lu", MqttPacketPublishQos(*packet),
         payloadSize);
@@ -109,13 +109,12 @@ static int MqttPacketPublishDeserialize(MqttPacketPublish **packet, Stream *stre
 
     LOG_DEBUG("reading payload payloadSize:%lu\n", payloadSize);
 
-    if (StringBufInit(&((*packet)->message), payloadSize) == -1)
+    (*packet)->message = bfromcstralloc(payloadSize, "");
+
+    if (StreamRead(bdata((*packet)->message), payloadSize, stream) == -1)
         return -1;
 
-    if (StreamRead((*packet)->message.data, payloadSize, stream) == -1)
-        return -1;
-
-    (*packet)->message.len = payloadSize;
+    (*packet)->message->slen = payloadSize;
 
     return 0;
 }

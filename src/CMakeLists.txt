@@ -1,3 +1,5 @@
+ADD_SUBDIRECTORY(lib)
+
 ADD_LIBRARY(mqtt STATIC
     client.c
     deserialize.c
@@ -8,7 +10,7 @@ ADD_LIBRARY(mqtt STATIC
     socketstream.c
     stream.c
     stream_mqtt.c
-    stringbuf.c
+    $<TARGET_OBJECTS:bstrlib>
 )
 
 IF(MSVC)
@@ -35,7 +37,10 @@ IF(MQTT_STREAM_HEXDUMP_WRITE)
     TARGET_COMPILE_DEFINITIONS(mqtt PRIVATE STREAM_HEXDUMP_WRITE)
 ENDIF()
 
-TARGET_INCLUDE_DIRECTORIES(mqtt INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+TARGET_INCLUDE_DIRECTORIES(mqtt
+    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib
+)
 
 OPTION(MQTT_AMALGAMATE "Create an amalgamation of all the sources" OFF)
 IF(MQTT_AMALGAMATE)

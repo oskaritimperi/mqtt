@@ -10,6 +10,8 @@
 
 #include "queue.h"
 
+#include <bstrlib/bstrlib.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -32,11 +34,11 @@ struct MqttClient
 {
     SocketStream stream;
     /* client id, NULL if we want to have server generated id */
-    char *clientId;
+    bstring clientId;
     /* set to 1 if we want to have a clean session */
     int cleanSession;
     /* remote host and port */
-    char *host;
+    bstring host;
     short port;
     /* keepalive interval in seconds */
     int keepAlive;
@@ -72,8 +74,8 @@ struct MqttClient
     int maxQueued;
     /* 1 if PINGREQ is sent and we are waiting for PINGRESP, 0 otherwise */
     int pingSent;
-    StringBuf willTopic;
-    StringBuf willMessage;
+    bstring willTopic;
+    bstring willMessage;
     int willQos;
     int willRetain;
 };
@@ -117,23 +119,6 @@ static inline int MqttClientInflightMessageCount(MqttClient *client)
     return inMessagesCount + outMessagesCount - queued;
 }
 
-static char *CopyString(const char *s, int n)
-{
-    char *result = NULL;
-
-    if (n < 0)
-        n = strlen(s);
-
-    result = malloc(n+1);
-
-    assert(result != NULL);
-
-    memcpy(result, s, n);
-    result[n] = '\0';
-
-    return result;
-}
-
 MqttClient *MqttClientNew(const char *clientId, int cleanSession)
 {
     MqttClient *client;
@@ -145,14 +130,7 @@ MqttClient *MqttClientNew(const char *clientId, int cleanSession)
         return NULL;
     }
 
-    if (clientId == NULL)
-    {
-        client->clientId = CopyString("", 0);
-    }
-    else
-    {
-        client->clientId = CopyString(clientId, -1);
-    }
+    client->clientId = bfromcstr(clientId);
 
     client->cleanSession = cleanSession;
 
@@ -172,16 +150,10 @@ MqttClient *MqttClientNew(const char *clientId, int cleanSession)
 
 void MqttClientFree(MqttClient *client)
 {
-    if (client->clientId)
-    {
-        free(client->clientId);
-    }
-
-    if (client->host)
-    {
-        free(client->host);
-    }
-
+    bdestroy(client->clientId);
+    bdestroy(client->willTopic);
+    bdestroy(client->willMessage);
+    bdestroy(client->host);
     free(client);
 }
 
@@ -240,7 +212,7 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
     assert(client != NULL);
     assert(host != NULL);
 
-    client->host = CopyString(host, -1);
+    client->host = bfromcstr(host);
     client->port = port;
     client->keepAlive = keepAlive;
 
@@ -275,25 +247,14 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
 
     packet->keepAlive = client->keepAlive;
 
-    if (StringBufInitFromCString(&packet->clientId, client->clientId, -1) == -1)
-    {
-        free(packet);
-        return -1;
-    }
+    packet->clientId = bstrcpy(client->clientId);
 
-    if (client->willTopic.data != NULL)
+    if (client->willTopic)
     {
         packet->connectFlags |= 0x04;
 
-        memcpy(&packet->willTopic, &client->willTopic,
-               sizeof(packet->willTopic));
-
-        memset(&client->willTopic, 0, sizeof(packet->willTopic));
-
-        memcpy(&packet->willMessage, &client->willMessage,
-               sizeof(packet->willMessage));
-
-        memset(&client->willMessage, 0, sizeof(packet->willMessage));
+        packet->willTopic = bstrcpy(client->willTopic);
+        packet->willMessage = bstrcpy(client->willMessage);
 
         packet->connectFlags |= (client->willQos & 3) << 3;
         packet->connectFlags |= (client->willRetain & 1) << 5;
@@ -450,12 +411,7 @@ int MqttClientSubscribe(MqttClient *client, const char *topicFilter,
     if (!packet)
         return -1;
 
-    if (StringBufInitFromCString(&packet->topicFilter, topicFilter, -1) == -1)
-    {
-        MqttPacketFree((MqttPacket *) packet);
-        return -1;
-    }
-
+    packet->topicFilter = bfromcstr(topicFilter);
     packet->qos = qos;
 
     MqttClientQueuePacket(client, (MqttPacket *) packet);
@@ -475,11 +431,7 @@ int MqttClientUnsubscribe(MqttClient *client, const char *topicFilter)
     packet = (MqttPacketUnsubscribe *) MqttPacketWithIdNew(
         MqttPacketTypeUnsubscribe, MqttClientNextPacketId(client));
 
-    if (StringBufInitFromCString(&packet->topicFilter, topicFilter, -1) == -1)
-    {
-        MqttPacketFree((MqttPacket *) packet);
-        return -1;
-    }
+    packet->topicFilter = bfromcstr(topicFilter);
 
     MqttClientQueuePacket(client, (MqttPacket *) packet);
 
@@ -528,18 +480,8 @@ int MqttClientPublish(MqttClient *client, int qos, int retain,
 
     packet->qos = qos;
     packet->retain = retain;
-
-    if (StringBufInitFromCString(&packet->topicName, topic, -1) == -1)
-    {
-        MqttPacketFree((MqttPacket *) packet);
-        return -1;
-    }
-
-    if (StringBufInitFromData(&packet->message, data, size) == -1)
-    {
-        MqttPacketFree((MqttPacket *) packet);
-        return -1;
-    }
+    packet->topicName = bfromcstr(topic);
+    packet->message = blk2bstr(data, size);
 
     if (qos > 0)
     {
@@ -609,16 +551,8 @@ int MqttClientSetWill(MqttClient *client, const char *topic, const void *msg,
         return -1;
     }
 
-    if (StringBufInitFromCString(&client->willTopic, topic, -1) == -1)
-    {
-        return -1;
-    }
-
-    if (StringBufInitFromData(&client->willMessage, msg, size) == -1)
-    {
-        return -1;
-    }
-
+    client->willTopic = bfromcstr(topic);
+    client->willMessage = blk2bstr(msg, size);
     client->willQos = qos;
     client->willRetain = retain;
 
@@ -759,9 +693,9 @@ static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packe
     {
         LOG_DEBUG("calling onMessage");
         client->onMessage(client,
-            packet->topicName.data,
-            packet->message.data,
-            packet->message.len);
+            bdata(packet->topicName),
+            bdata(packet->message),
+            blength(packet->message));
     }
 
     if (MqttPacketPublishQos(packet) > 0)
