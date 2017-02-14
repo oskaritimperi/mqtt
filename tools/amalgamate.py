@@ -45,6 +45,14 @@ def read_file(filename):
                     pass
                 else:
                     continue
+            elif line.startswith('#include <'):
+                header = line[10:]
+                idx = header.find('>')
+                if idx > 0:
+                    header = header[:idx]
+                    header = os.path.join(src_dir, 'lib', header)
+                    if os.path.isfile(header):
+                        continue
             buf.write(tounicode(line))
         return buf.getvalue()
 
