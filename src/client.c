@@ -150,10 +150,25 @@ MqttClient *MqttClientNew(const char *clientId, int cleanSession)
 
 void MqttClientFree(MqttClient *client)
 {
+    MqttPacket *packet, *next;
+
+    TAILQ_FOREACH_SAFE(packet, &client->outMessages, messages, next)
+    {
+        TAILQ_REMOVE(&client->outMessages, packet, messages);
+        MqttPacketFree(packet);
+    }
+
+    TAILQ_FOREACH_SAFE(packet, &client->inMessages, messages, next)
+    {
+        TAILQ_REMOVE(&client->inMessages, packet, messages);
+        MqttPacketFree(packet);
+    }
+
     bdestroy(client->clientId);
     bdestroy(client->willTopic);
     bdestroy(client->willMessage);
     bdestroy(client->host);
+
     free(client);
 }
 
