@@ -657,8 +657,6 @@ static void MqttClientHandleSubAck(MqttClient *client, MqttPacketSubAck *packet)
                                 packet->returnCode);
         }
     }
-
-    MqttPacketFree((MqttPacket *) packet);
 }
 
 static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packet)
@@ -684,7 +682,6 @@ static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packe
         {
             LOG_DEBUG("resending PUBREC id:%d", MqttPacketId(packet));
             MqttClientQueuePacket(client, pubRec);
-            MqttPacketFree((MqttPacket *) packet);
             return;
         }
     }
@@ -713,8 +710,6 @@ static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packe
 
         MqttClientQueuePacket(client, resp);
     }
-
-    MqttPacketFree((MqttPacket *) packet);
 }
 
 static void MqttClientHandlePubAck(MqttClient *client, MqttPacket *packet)
@@ -745,8 +740,6 @@ static void MqttClientHandlePubAck(MqttClient *client, MqttPacket *packet)
             client->onPublish(client, MqttPacketId(packet));
         }
     }
-
-    MqttPacketFree(packet);
 }
 
 static void MqttClientHandlePubRec(MqttClient *client, MqttPacket *packet)
@@ -782,8 +775,6 @@ static void MqttClientHandlePubRec(MqttClient *client, MqttPacket *packet)
 
         TAILQ_INSERT_TAIL(&client->outMessages, pubRel, messages);
     }
-
-    MqttPacketFree(packet);
 }
 
 static void MqttClientHandlePubRel(MqttClient *client, MqttPacket *packet)
@@ -839,8 +830,6 @@ static void MqttClientHandlePubRel(MqttClient *client, MqttPacket *packet)
 
         MqttClientQueuePacket(client, pubComp);
     }
-
-    MqttPacketFree(packet);
 }
 
 static void MqttClientHandlePubComp(MqttClient *client, MqttPacket *packet)
@@ -872,8 +861,6 @@ static void MqttClientHandlePubComp(MqttClient *client, MqttPacket *packet)
             client->onPublish(client, MqttPacketId(packet));
         }
     }
-
-    MqttPacketFree(packet);
 }
 
 static void MqttClientHandleUnsubAck(MqttClient *client, MqttPacket *packet)
@@ -908,8 +895,6 @@ static void MqttClientHandleUnsubAck(MqttClient *client, MqttPacket *packet)
             client->onUnsubscribe(client, MqttPacketId(packet));
         }
     }
-
-    MqttPacketFree(packet);
 }
 
 static int MqttClientRecvPacket(MqttClient *client)
@@ -963,6 +948,8 @@ static int MqttClientRecvPacket(MqttClient *client)
             LOG_DEBUG("unhandled packet type=%d", MqttPacketType(packet));
             break;
     }
+
+    MqttPacketFree(packet);
 
     return 0;
 }

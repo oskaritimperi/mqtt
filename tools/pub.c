@@ -92,5 +92,7 @@ int main(int argc, char **argv)
 
     MqttClientRun(client);
 
+    MqttClientFree(client);
+
     return 0;
 }
