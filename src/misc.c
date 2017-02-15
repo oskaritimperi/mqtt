@@ -4,9 +4,23 @@
 #include <time.h>
 
 #if defined(_WIN32)
-#error GetCurrentTime implementation missing
+#include "win32.h"
+int64_t MqttGetCurrentTime()
+{
+    static volatile long once = 0;
+    static LARGE_INTEGER frequency;
+    LARGE_INTEGER counter;
+    if (InterlockedCompareExchange(&once, 1, 0) == 0)
+    {
+        QueryPerformanceFrequency(&frequency);
+    }
+    QueryPerformanceCounter(&counter);
+    counter.QuadPart *= 1000;
+    counter.QuadPart /= frequency.QuadPart;
+    return counter.QuadPart;
+}
 #else
-int64_t GetCurrentTime()
+int64_t MqttGetCurrentTime()
 {
     struct timespec t;
 

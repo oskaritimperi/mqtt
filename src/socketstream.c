@@ -3,7 +3,11 @@
 #include <assert.h>
 #include <string.h>
 
+#if !defined(_WIN32)
 #include <arpa/inet.h>
+#else
+#include "win32.h"
+#endif
 
 /* close */
 #include <unistd.h>

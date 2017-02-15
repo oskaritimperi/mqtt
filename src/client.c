@@ -367,7 +367,7 @@ int MqttClientRunOnce(MqttClient *client)
         }
         else if (SIMPLEQ_EMPTY(&client->sendQueue))
         {
-            int64_t elapsed = GetCurrentTime() - client->lastPacketSentTime;
+            int64_t elapsed = MqttGetCurrentTime() - client->lastPacketSentTime;
             if (elapsed/1000 >= client->keepAlive)
             {
                 MqttClientQueueSimplePacket(client, MqttPacketTypePingReq);
@@ -582,7 +582,7 @@ static int MqttClientSendPacket(MqttClient *client, MqttPacket *packet)
     if (MqttPacketSerialize(packet, &client->stream.base) == -1)
         return -1;
 
-    packet->sentAt = GetCurrentTime();
+    packet->sentAt = MqttGetCurrentTime();
     client->lastPacketSentTime = packet->sentAt;
 
     if (packet->type == MqttPacketTypeDisconnect)
@@ -968,7 +968,7 @@ static uint16_t MqttClientNextPacketId(MqttClient *client)
 
 static int64_t MqttPacketTimeSinceSent(MqttPacket *packet)
 {
-    int64_t now = GetCurrentTime();
+    int64_t now = MqttGetCurrentTime();
     return now - packet->sentAt;
 }
 

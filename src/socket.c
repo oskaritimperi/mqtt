@@ -5,9 +5,7 @@
 #include <assert.h>
 
 #if defined(_WIN32)
-#error not implemented yet
-#define WIN32_MEAN_AND_LEAN 1
-#include <windows.h>
+#include "win32.h"
 #else
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -8,6 +8,7 @@ src_dir = os.path.join(this_dir, '..', 'src')
 
 sources = (
     'config.h',
+    'win32.h',
     'queue.h',
     'log.h',
     'misc.c',

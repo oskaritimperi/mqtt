@@ -10,7 +10,7 @@
     Returns the current time as milliseconds. The return value can only be
     compared to another return value of the function.
 */
-int64_t GetCurrentTime();
+int64_t MqttGetCurrentTime();
 
 /*
     Simple hexdump to stdout.
