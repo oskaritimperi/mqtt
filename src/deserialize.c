@@ -109,12 +109,16 @@ static int MqttPacketPublishDeserialize(MqttPacketPublish **packet, Stream *stre
 
     LOG_DEBUG("reading payload payloadSize:%lu\n", payloadSize);
 
-    (*packet)->message = bfromcstralloc(payloadSize, "");
+    /* Allocate extra byte for a NULL terminator. If the user tries to print
+       the payload directly. */
+
+    (*packet)->message = bfromcstralloc(payloadSize+1, "");
 
     if (StreamRead(bdata((*packet)->message), payloadSize, stream) == -1)
         return -1;
 
     (*packet)->message->slen = payloadSize;
+    (*packet)->message->data[payloadSize] = '\0';
 
     return 0;
 }

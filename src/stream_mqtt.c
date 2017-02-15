@@ -10,7 +10,9 @@ int64_t StreamReadMqttString(bstring *buf, Stream *stream)
     if (StreamReadUint16Be(&len, stream) == -1)
         return -1;
 
-    result = bfromcstralloc(len, "");
+    /* We need 1 extra byte for a NULL terminator. bfromcstralloc doesn't do
+       any size snapping. */
+    result = bfromcstralloc(len+1, "");
 
     if (!result)
         return -1;
@@ -22,6 +24,7 @@ int64_t StreamReadMqttString(bstring *buf, Stream *stream)
     }
 
     result->slen = len;
+    result->data[len] = '\0';
 
     *buf = result;
 
