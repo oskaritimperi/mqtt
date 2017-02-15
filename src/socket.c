@@ -92,3 +92,52 @@ int SocketSendAll(int sock, const char *buf, size_t *len)
 
     return rv == -1 ? -1 : 0;
 }
+
+int SocketSelect(int sock, int *events, int timeout)
+{
+    fd_set rfd, wfd;
+    struct timeval tv;
+    int rv;
+
+    assert(sock != -1);
+    assert(events != NULL);
+    assert(*events != 0);
+
+    FD_ZERO(&rfd);
+    FD_ZERO(&wfd);
+
+    if (*events & EV_READ)
+    {
+        FD_SET(sock, &rfd);
+    }
+
+    if (*events & EV_WRITE)
+    {
+        FD_SET(sock, &wfd);
+    }
+
+    memset(&tv, 0, sizeof(tv));
+    tv.tv_sec = timeout;
+    tv.tv_usec = 0;
+
+    *events = 0;
+
+    rv = select(sock+1, &rfd, &wfd, NULL, &tv);
+
+    if (rv < 0)
+    {
+        return rv;
+    }
+
+    if (FD_ISSET(sock, &wfd))
+    {
+        *events = EV_WRITE;
+    }
+
+    if (FD_ISSET(sock, &rfd))
+    {
+        *events = EV_READ;
+    }
+
+    return rv;
+}
