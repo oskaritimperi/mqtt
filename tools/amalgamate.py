@@ -84,9 +84,18 @@ def write_file(output, srcfilename):
     output.write(read_file(srcfilename))
 
 
+def generate_license_comment():
+    fn = os.path.join(this_dir, '..', 'COPYING')
+    with open(fn, 'r') as fp:
+        license = fp.read()
+    return "/*\n" + license + "*/"
+
 output_filename = sys.argv[1]
 
 with open(output_filename, 'w') as out:
+    out.write(generate_license_comment())
+    out.write("\n")
+
     for source in sources:
         path = os.path.join(src_dir, source)
 
