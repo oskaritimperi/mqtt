@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "log.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -16,12 +17,33 @@
 #include <arpa/inet.h>
 #endif
 
+#if defined(_WIN32)
+static int InitializeWsa()
+{
+    WSADATA wsa;
+    int rc;
+    if ((rc = WSAStartup(MAKEWORD(2, 2), &wsa)) != 0)
+    {
+        LOG_ERROR("WSAStartup failed: %d", rc);
+        return -1;
+    }
+    return 0;
+}
+#endif
+
 int SocketConnect(const char *host, short port)
 {
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char portstr[6];
     int sock;
+
+#if defined(_WIN32)
+    if (InitializeWsa() != 0)
+    {
+        return -1;
+    }
+#endif
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -64,7 +86,8 @@ int SocketConnect(const char *host, short port)
 int SocketDisconnect(int sock)
 {
 #ifdef _WIN32
-    return closesocket(sock);
+    int rc = closesocket(sock);
+    WSACleanup();
 #else
     return close(sock);
 #endif
