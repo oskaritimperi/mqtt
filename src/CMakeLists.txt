@@ -42,6 +42,10 @@ TARGET_INCLUDE_DIRECTORIES(mqtt
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
 
+IF(WIN32)
+    TARGET_LINK_LIBRARIES(mqtt INTERFACE ws2_32)
+ENDIF()
+
 OPTION(MQTT_AMALGAMATE "Create an amalgamation of all the sources" OFF)
 IF(MQTT_AMALGAMATE)
     SET(AMALGAMATION_DIR ${PROJECT_SOURCE_DIR}/amalgamation CACHE PATH "Where to output the amalgamation")
