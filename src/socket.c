@@ -29,11 +29,13 @@ static int InitializeWsa()
     }
     return 0;
 }
+
+#define close closesocket
 #endif
 
 int SocketConnect(const char *host, short port)
 {
-    struct addrinfo hints, *servinfo, *p;
+    struct addrinfo hints, *servinfo, *p = NULL;
     int rv;
     char portstr[6];
     int sock;
@@ -53,7 +55,7 @@ int SocketConnect(const char *host, short port)
 
     if ((rv = getaddrinfo(host, portstr, &hints, &servinfo)) != 0)
     {
-        return -1;
+        goto cleanup;
     }
 
     for (p = servinfo; p != NULL; p = p->ai_next)
@@ -75,8 +77,13 @@ int SocketConnect(const char *host, short port)
 
     freeaddrinfo(servinfo);
 
+cleanup:
+
     if (p == NULL)
     {
+#if defined(_WIN32)
+        WSACleanup();
+#endif
         return -1;
     }
 
@@ -85,12 +92,11 @@ int SocketConnect(const char *host, short port)
 
 int SocketDisconnect(int sock)
 {
-#ifdef _WIN32
-    int rc = closesocket(sock);
+    int rc = close(sock);
+#if defined(_WIN32)
     WSACleanup();
-#else
-    return close(sock);
 #endif
+    return rc;
 }
 
 int SocketSendAll(int sock, const char *buf, size_t *len)
