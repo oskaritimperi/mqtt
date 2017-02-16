@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 
 int SocketConnect(const char *host, short port);
 
@@ -18,5 +19,9 @@ enum
 };
 
 int SocketSelect(int sock, int *events, int timeout);
+
+int64_t SocketRecv(int sock, void *buf, size_t len, int flags);
+
+int64_t SocketSend(int sock, const void *buf, size_t len, int flags);
 
 #endif

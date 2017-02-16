@@ -99,6 +99,16 @@ int SocketDisconnect(int sock)
     return rc;
 }
 
+int64_t SocketRecv(int sock, void *buf, size_t len, int flags)
+{
+    return recv(sock, buf, len, flags);
+}
+
+int64_t SocketSend(int sock, const void *buf, size_t len, int flags)
+{
+    return send(sock, buf, len, flags);
+}
+
 int SocketSendAll(int sock, const char *buf, size_t *len)
 {
     size_t total = 0;
