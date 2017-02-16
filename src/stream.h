@@ -6,18 +6,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#ifndef SEEK_SET
-#define SEEK_SET (-1)
-#endif
-
-#ifndef SEEK_CUR
-#define SEEK_CUR (-2)
-#endif
-
-#ifndef SEEK_END
-#define SEEK_END (-3)
-#endif
-
 typedef struct Stream Stream;
 typedef struct StreamOps StreamOps;
 
