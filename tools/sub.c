@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "mqtt.h"
-#include "getopt.h"
+#include "optparse.h"
 
 struct options
 {
@@ -43,10 +43,64 @@ void usage(const char *prog)
     exit(1);
 }
 
+static void parse_args(struct options *options, int argc, char **argv)
+{
+    int option;
+
+    struct optparse_long longopts[] =
+    {
+        { "qos", 'q', OPTPARSE_REQUIRED },
+        { "topic", 't', OPTPARSE_REQUIRED },
+        { "no-clean", 'n', OPTPARSE_NONE },
+        { "id", 'i', OPTPARSE_REQUIRED },
+        { "help", 'h', OPTPARSE_NONE },
+        { NULL }
+    };
+
+    struct optparse parser;
+
+    optparse_init(&parser, argv);
+
+    while ((option = optparse_long(&parser, longopts, NULL)) != -1)
+    {
+        switch (option)
+        {
+            case 'q':
+                options->qos = strtol(parser.optarg, NULL, 10);
+                if (options->qos < 0 || options->qos > 2)
+                {
+                    fprintf(stderr, "invalid qos: %s\n", parser.optarg);
+                    exit(1);
+                }
+                break;
+
+            case 't':
+                options->topic = parser.optarg;
+                break;
+
+            case 'n':
+                options->clean = 0;
+                break;
+
+            case 'i':
+                options->client_id = parser.optarg;
+                break;
+
+            case 'h':
+                usage(argv[0]);
+                break;
+
+            case '?':
+                fprintf(stderr, "%s: %s\n", argv[0], parser.errmsg);
+                usage(argv[0]);
+                break;
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     MqttClient *client;
-    const char *opt;
     struct options options;
 
     options.qos = 0;
@@ -54,39 +108,7 @@ int main(int argc, char **argv)
     options.clean = 1;
     options.client_id = NULL;
 
-    while ((opt = GETOPT(argc, argv)) != NULL)
-    {
-        GETOPT_SWITCH(opt)
-        {
-            GETOPT_OPTARG("--qos"):
-                options.qos = strtol(optarg, NULL, 10);
-                if (options.qos < 0 || options.qos > 2)
-                {
-                    fprintf(stderr, "invalid qos: %s\n", optarg);
-                    return 1;
-                }
-                break;
-
-            GETOPT_OPTARG("--topic"):
-                options.topic = optarg;
-                break;
-
-            GETOPT_OPT("--no-clean"):
-                options.clean = 0;
-                break;
-
-            GETOPT_OPTARG("--id"):
-                options.client_id = optarg;
-                break;
-
-            GETOPT_MISSING_ARG:
-                fprintf(stderr, "missing argument to: %s\n", opt);
-
-            GETOPT_DEFAULT:
-                usage(argv[0]);
-                break;
-        }
-    }
+    parse_args(&options, argc, argv);
 
     client = MqttClientNew(options.client_id, options.clean);
 
