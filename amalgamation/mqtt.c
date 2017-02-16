@@ -160,6 +160,7 @@ freely, subject to the following restrictions:
 # endif
 #endif
 
+#if 0
 /*
  * Singly-linked List definitions.
  */
@@ -353,6 +354,7 @@ struct {								\
 	*(elm2)->field.le_prev = (elm2);				\
 	QUEUEDEBUG_LIST_POSTREMOVE((elm), field)			\
 } while (/*CONSTCOND*/0)
+#endif /* 0 */
 
 /*
  * Simple queue definitions.
@@ -622,6 +624,7 @@ struct {								\
 	}								\
 } while (/*CONSTCOND*/0)
 
+#if 0
 /*
  * Singly-linked Tail queue declarations.
  */
@@ -902,6 +905,8 @@ struct {								\
 	    ? ((head)->cqh_last)					\
 	    : (elm->field.cqe_prev))
 #endif /* !_KERNEL */
+
+#endif /* 0 */
 
 #endif	/* !_SYS_QUEUE_H_ */
 
@@ -4534,18 +4539,6 @@ int n, r, l;
 #include <stdlib.h>
 #include <stdint.h>
 
-#ifndef SEEK_SET
-#define SEEK_SET (-1)
-#endif
-
-#ifndef SEEK_CUR
-#define SEEK_CUR (-2)
-#endif
-
-#ifndef SEEK_END
-#define SEEK_END (-3)
-#endif
-
 typedef struct Stream Stream;
 typedef struct StreamOps StreamOps;
 
@@ -4642,7 +4635,7 @@ int64_t StreamWriteUint16Be(uint16_t v, Stream *stream)
 {
     unsigned char data[2];
     data[0] = v >> 8;
-    data[1] = v;
+    data[1] = (unsigned char) (v & 0xFF);
     return StreamWrite(data, sizeof(data), stream);
 }
 
@@ -4686,19 +4679,11 @@ int SocketStreamOpen(SocketStream *stream, int sock);
 #include <assert.h>
 #include <string.h>
 
-#if !defined(_WIN32)
-#include <arpa/inet.h>
-#else
-#endif
-
-/* close */
-#include <unistd.h>
-
 static int SocketStreamClose(Stream *base)
 {
     int rv;
     SocketStream *stream = (SocketStream *) base;
-    rv = close(stream->sock);
+    rv = SocketDisconnect(stream->sock);
     stream->sock = -1;
     return rv;
 }
@@ -4712,7 +4697,7 @@ static int64_t SocketStreamRead(void *ptr, size_t size, Stream *stream)
     while (received < size)
     {
         char *p = ((char *) ptr) + received;
-        ssize_t rv = recv(ss->sock, p, size - received, 0);
+        int64_t rv = SocketRecv(ss->sock, p, size - received, 0);
         /* Error */
         if (rv == -1)
             return -1;
@@ -4733,7 +4718,7 @@ static int64_t SocketStreamWrite(const void *ptr, size_t size, Stream *stream)
     while (written < size)
     {
         const char *p = ((char *) ptr) + written;
-        ssize_t rv = send(ss->sock, p, size - written, 0);
+        int64_t rv = SocketSend(ss->sock, p, size - written, 0);
         if (rv == -1)
             return -1;
         written += (size_t) rv;
@@ -4868,6 +4853,7 @@ int64_t StreamWriteRemainingLength(size_t remainingLength, Stream *stream)
 
 
 #include <stdlib.h>
+#include <stdint.h>
 
 int SocketConnect(const char *host, short port);
 
@@ -4882,6 +4868,10 @@ enum
 };
 
 int SocketSelect(int sock, int *events, int timeout);
+
+int64_t SocketRecv(int sock, void *buf, size_t len, int flags);
+
+int64_t SocketSend(int sock, const void *buf, size_t len, int flags);
 
 #endif
 
@@ -4917,11 +4907,13 @@ static int InitializeWsa()
     }
     return 0;
 }
+
+#define close closesocket
 #endif
 
 int SocketConnect(const char *host, short port)
 {
-    struct addrinfo hints, *servinfo, *p;
+    struct addrinfo hints, *servinfo, *p = NULL;
     int rv;
     char portstr[6];
     int sock;
@@ -4941,7 +4933,7 @@ int SocketConnect(const char *host, short port)
 
     if ((rv = getaddrinfo(host, portstr, &hints, &servinfo)) != 0)
     {
-        return -1;
+        goto cleanup;
     }
 
     for (p = servinfo; p != NULL; p = p->ai_next)
@@ -4963,8 +4955,13 @@ int SocketConnect(const char *host, short port)
 
     freeaddrinfo(servinfo);
 
+cleanup:
+
     if (p == NULL)
     {
+#if defined(_WIN32)
+        WSACleanup();
+#endif
         return -1;
     }
 
@@ -4973,12 +4970,21 @@ int SocketConnect(const char *host, short port)
 
 int SocketDisconnect(int sock)
 {
-#ifdef _WIN32
-    int rc = closesocket(sock);
+    int rc = close(sock);
+#if defined(_WIN32)
     WSACleanup();
-#else
-    return close(sock);
 #endif
+    return rc;
+}
+
+int64_t SocketRecv(int sock, void *buf, size_t len, int flags)
+{
+    return recv(sock, buf, len, flags);
+}
+
+int64_t SocketSend(int sock, const void *buf, size_t len, int flags)
+{
+    return send(sock, buf, len, flags);
 }
 
 int SocketSendAll(int sock, const char *buf, size_t *len)
