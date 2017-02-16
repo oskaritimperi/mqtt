@@ -100,6 +100,7 @@
 # endif
 #endif
 
+#if 0
 /*
  * Singly-linked List definitions.
  */
@@ -293,6 +294,7 @@ struct {								\
 	*(elm2)->field.le_prev = (elm2);				\
 	QUEUEDEBUG_LIST_POSTREMOVE((elm), field)			\
 } while (/*CONSTCOND*/0)
+#endif /* 0 */
 
 /*
  * Simple queue definitions.
@@ -562,6 +564,7 @@ struct {								\
 	}								\
 } while (/*CONSTCOND*/0)
 
+#if 0
 /*
  * Singly-linked Tail queue declarations.
  */
@@ -842,5 +845,7 @@ struct {								\
 	    ? ((head)->cqh_last)					\
 	    : (elm->field.cqe_prev))
 #endif /* !_KERNEL */
+
+#endif /* 0 */
 
 #endif	/* !_SYS_QUEUE_H_ */
