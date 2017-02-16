@@ -61,7 +61,7 @@ int64_t StreamWriteUint16Be(uint16_t v, Stream *stream)
 {
     unsigned char data[2];
     data[0] = v >> 8;
-    data[1] = v;
+    data[1] = (unsigned char) (v & 0xFF);
     return StreamWrite(data, sizeof(data), stream);
 }
 
