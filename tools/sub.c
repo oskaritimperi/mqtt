@@ -28,7 +28,7 @@ void onSubscribe(MqttClient *client, int id, MqttSubscriptionStatus status)
 }
 
 void onMessage(MqttClient *client, const char *topic, const void *data,
-    size_t size)
+    size_t size, int qos, int retain)
 {
     (void) client;
     printf("onMessage topic=<%s> message=<%.*s>\n", topic, (int) size,

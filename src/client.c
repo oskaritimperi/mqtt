@@ -694,7 +694,9 @@ static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packe
         client->onMessage(client,
             bdata(packet->topicName),
             bdata(packet->message),
-            blength(packet->message));
+            blength(packet->message),
+            packet->qos,
+            packet->retain);
     }
 
     if (MqttPacketPublishQos(packet) > 0)

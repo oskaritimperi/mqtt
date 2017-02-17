@@ -39,7 +39,10 @@ typedef void (*MqttClientOnUnsubscribeCallback)(MqttClient *client, int id);
 
 typedef void (*MqttClientOnMessageCallback)(MqttClient *client,
                                             const char *topic,
-                                            const void *data, size_t size);
+                                            const void *data,
+                                            size_t size,
+                                            int qos,
+                                            int retain);
 
 typedef void (*MqttClientOnPublishCallback)(MqttClient *client, int id);
 
