@@ -116,7 +116,7 @@ static MQTT_INLINE int MqttClientInflightMessageCount(MqttClient *client)
     return inMessagesCount + outMessagesCount - queued;
 }
 
-MqttClient *MqttClientNew(const char *clientId, int cleanSession)
+MqttClient *MqttClientNew(const char *clientId)
 {
     MqttClient *client;
 
@@ -128,8 +128,6 @@ MqttClient *MqttClientNew(const char *clientId, int cleanSession)
     }
 
     client->clientId = bfromcstr(clientId);
-
-    client->cleanSession = cleanSession;
 
     client->stream.sock = -1;
 
@@ -216,7 +214,7 @@ void MqttClientSetOnPublish(MqttClient *client,
 }
 
 int MqttClientConnect(MqttClient *client, const char *host, short port,
-                      int keepAlive)
+                      int keepAlive, int cleanSession)
 {
     int sock;
     MqttPacketConnect *packet;
@@ -227,6 +225,7 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
     client->host = bfromcstr(host);
     client->port = port;
     client->keepAlive = keepAlive;
+    client->cleanSession = cleanSession;
 
     if (keepAlive < 0)
     {

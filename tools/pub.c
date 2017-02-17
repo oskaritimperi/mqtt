@@ -111,13 +111,13 @@ int main(int argc, char **argv)
 
     parse_args(&options, argc, argv);
 
-    client = MqttClientNew(options.client_id, 1);
+    client = MqttClientNew(options.client_id);
 
     MqttClientSetOnConnect(client, onConnect);
     MqttClientSetOnPublish(client, onPublish);
     MqttClientSetUserData(client, &options);
 
-    MqttClientConnect(client, "test.mosquitto.org", 1883, 60);
+    MqttClientConnect(client, "test.mosquitto.org", 1883, 60, 1);
 
     MqttClientRun(client);
 
