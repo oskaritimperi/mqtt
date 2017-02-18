@@ -164,6 +164,11 @@ void MqttClientFree(MqttClient *client)
     bdestroy(client->willMessage);
     bdestroy(client->host);
 
+    if (client->stream.sock != -1)
+    {
+        SocketDisconnect(client->stream.sock);
+    }
+
     free(client);
 }
 
