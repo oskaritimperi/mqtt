@@ -322,7 +322,7 @@ int MqttClientRunOnce(MqttClient *client, int timeout)
 
     LOG_DEBUG("selecting");
 
-    if (timeout <= 0)
+    if (timeout < 0)
     {
         timeout = client->keepAlive * 1000;
     }
