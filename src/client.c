@@ -282,6 +282,11 @@ int MqttClientDisconnect(MqttClient *client)
     return MqttClientQueueSimplePacket(client, MqttPacketTypeDisconnect);
 }
 
+int MqttClientIsConnected(MqttClient *client)
+{
+    return client->stream.sock != -1;
+}
+
 int MqttClientRunOnce(MqttClient *client, int timeout)
 {
     int rv;
