@@ -382,7 +382,7 @@ int MqttClientRunOnce(MqttClient *client, int timeout)
         else if (SIMPLEQ_EMPTY(&client->sendQueue))
         {
             int64_t elapsed = MqttGetCurrentTime() - client->lastPacketSentTime;
-            if (elapsed/1000 >= client->keepAlive)
+            if (elapsed/1000 >= client->keepAlive && client->keepAlive > 0)
             {
                 MqttClientQueueSimplePacket(client, MqttPacketTypePingReq);
                 client->pingSent = 1;
