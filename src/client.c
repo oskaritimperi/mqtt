@@ -800,7 +800,7 @@ static void MqttClientHandlePubRel(MqttClient *client, MqttPacket *packet)
     TAILQ_FOREACH(pubRec, &client->inMessages, messages)
     {
         if (MqttPacketId(pubRec) == MqttPacketId(packet) &&
-            MqttPacketType(pubRec) == MqttPacketTypePublish)
+            MqttPacketType(pubRec) == MqttPacketTypePubRec)
         {
             break;
         }
