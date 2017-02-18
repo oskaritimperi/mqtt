@@ -39,11 +39,14 @@ typedef void (*MqttClientOnUnsubscribeCallback)(MqttClient *client, int id);
 
 typedef void (*MqttClientOnMessageCallback)(MqttClient *client,
                                             const char *topic,
-                                            const void *data, size_t size);
+                                            const void *data,
+                                            size_t size,
+                                            int qos,
+                                            int retain);
 
 typedef void (*MqttClientOnPublishCallback)(MqttClient *client, int id);
 
-MqttClient *MqttClientNew(const char *clientId, int cleanSession);
+MqttClient *MqttClientNew(const char *clientId);
 
 void MqttClientFree(MqttClient *client);
 
@@ -66,11 +69,13 @@ void MqttClientSetOnPublish(MqttClient *client,
                             MqttClientOnPublishCallback cb);
 
 int MqttClientConnect(MqttClient *client, const char *host, short port,
-                      int keepAlive);
+                      int keepAlive, int cleanSession);
 
 int MqttClientDisconnect(MqttClient *client);
 
-int MqttClientRunOnce(MqttClient *client);
+int MqttClientIsConnected(MqttClient *client);
+
+int MqttClientRunOnce(MqttClient *client, int timeout);
 
 int MqttClientRun(MqttClient *client);
 
