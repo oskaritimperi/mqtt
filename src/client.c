@@ -282,7 +282,7 @@ int MqttClientDisconnect(MqttClient *client)
     return MqttClientQueueSimplePacket(client, MqttPacketTypeDisconnect);
 }
 
-int MqttClientRunOnce(MqttClient *client)
+int MqttClientRunOnce(MqttClient *client, int timeout)
 {
     int rv;
     int events;
@@ -312,7 +312,12 @@ int MqttClientRunOnce(MqttClient *client)
 
     LOG_DEBUG("selecting");
 
-    rv = SocketSelect(client->stream.sock, &events, client->keepAlive);
+    if (timeout <= 0)
+    {
+        timeout = client->keepAlive * 1000;
+    }
+
+    rv = SocketSelect(client->stream.sock, &events, timeout);
 
     if (rv == -1)
     {
@@ -390,7 +395,7 @@ int MqttClientRun(MqttClient *client)
 
     while (!client->stopped)
     {
-        if (MqttClientRunOnce(client) == -1)
+        if (MqttClientRunOnce(client, -1) == -1)
             return -1;
     }
 

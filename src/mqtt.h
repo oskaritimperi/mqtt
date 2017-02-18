@@ -73,7 +73,7 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
 
 int MqttClientDisconnect(MqttClient *client);
 
-int MqttClientRunOnce(MqttClient *client);
+int MqttClientRunOnce(MqttClient *client, int timeout);
 
 int MqttClientRun(MqttClient *client);
 
