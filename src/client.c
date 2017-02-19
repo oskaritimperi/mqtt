@@ -90,6 +90,7 @@ static int MqttClientSendPacket(MqttClient *client, MqttPacket *packet);
 static int MqttClientRecvPacket(MqttClient *client);
 static uint16_t MqttClientNextPacketId(MqttClient *client);
 static void MqttClientProcessMessageQueue(MqttClient *client);
+static void MqttClientClearQueues(MqttClient *client);
 
 static MQTT_INLINE int MqttClientInflightMessageCount(MqttClient *client)
 {
@@ -145,19 +146,7 @@ MqttClient *MqttClientNew(const char *clientId)
 
 void MqttClientFree(MqttClient *client)
 {
-    MqttPacket *packet, *next;
-
-    TAILQ_FOREACH_SAFE(packet, &client->outMessages, messages, next)
-    {
-        TAILQ_REMOVE(&client->outMessages, packet, messages);
-        MqttPacketFree(packet);
-    }
-
-    TAILQ_FOREACH_SAFE(packet, &client->inMessages, messages, next)
-    {
-        TAILQ_REMOVE(&client->inMessages, packet, messages);
-        MqttPacketFree(packet);
-    }
+    MqttClientClearQueues(client);
 
     bdestroy(client->clientId);
     bdestroy(client->willTopic);
@@ -227,10 +216,18 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
     assert(client != NULL);
     assert(host != NULL);
 
-    client->host = bfromcstr(host);
+    if (client->host)
+        bassigncstr(client->host, host);
+    else
+        client->host = bfromcstr(host);
     client->port = port;
     client->keepAlive = keepAlive;
     client->cleanSession = cleanSession;
+
+    /* In case we are reconnecting */
+    client->stopped = 0;
+    client->pingSent = 0;
+    MqttClientClearQueues(client);
 
     if (keepAlive < 0)
     {
@@ -1085,4 +1082,36 @@ static void MqttClientProcessMessageQueue(MqttClient *client)
 {
     MqttClientProcessInMessages(client);
     MqttClientProcessOutMessages(client);
+}
+
+static void MqttClientClearQueues(MqttClient *client)
+{
+    while (!SIMPLEQ_EMPTY(&client->sendQueue))
+    {
+        MqttPacket *packet = SIMPLEQ_FIRST(&client->sendQueue);
+
+        SIMPLEQ_REMOVE_HEAD(&client->sendQueue, sendQueue);
+
+        if (TAILQ_NEXT(packet, messages) == NULL &&
+            TAILQ_PREV(packet, MessageList, messages) == NULL &&
+            TAILQ_FIRST(&client->inMessages) != packet &&
+            TAILQ_FIRST(&client->outMessages) != packet)
+        {
+            MqttPacketFree(packet);
+        }
+    }
+
+    while (!TAILQ_EMPTY(&client->outMessages))
+    {
+        MqttPacket *packet = TAILQ_FIRST(&client->outMessages);
+        TAILQ_REMOVE(&client->outMessages, packet, messages);
+        MqttPacketFree(packet);
+    }
+
+    while (!TAILQ_EMPTY(&client->inMessages))
+    {
+        MqttPacket *packet = TAILQ_FIRST(&client->inMessages);
+        TAILQ_REMOVE(&client->inMessages, packet, messages);
+        MqttPacketFree(packet);
+    }
 }
