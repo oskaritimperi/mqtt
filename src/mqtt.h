@@ -33,6 +33,7 @@ typedef void (*MqttClientOnConnectCallback)(MqttClient *client,
 
 typedef void (*MqttClientOnSubscribeCallback)(MqttClient *client,
                                               int id,
+                                              const char *topicFilter,
                                               MqttSubscriptionStatus status);
 
 typedef void (*MqttClientOnUnsubscribeCallback)(MqttClient *client, int id);
@@ -81,6 +82,9 @@ int MqttClientRun(MqttClient *client);
 
 int MqttClientSubscribe(MqttClient *client, const char *topicFilter,
                         int qos);
+
+int MqttClientSubscribeMany(MqttClient *client, const char **topicFilters,
+  int *qos, size_t count);
 
 int MqttClientUnsubscribe(MqttClient *client, const char *topicFilter);
 

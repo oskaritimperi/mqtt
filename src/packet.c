@@ -96,7 +96,7 @@ void MqttPacketFree(MqttPacket *packet)
     else if (MqttPacketType(packet) == MqttPacketTypeSubscribe)
     {
         MqttPacketSubscribe *p = (MqttPacketSubscribe *) packet;
-        bdestroy(p->topicFilter);
+        bstrListDestroy(p->topicFilters);
     }
     else if (MqttPacketType(packet) == MqttPacketTypeUnsubscribe)
     {

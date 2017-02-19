@@ -92,8 +92,8 @@ typedef struct MqttPacketSubscribe MqttPacketSubscribe;
 struct MqttPacketSubscribe
 {
     MqttPacket base;
-    bstring topicFilter;
-    char qos;
+    struct bstrList *topicFilters;
+    int *qos;
 };
 
 typedef struct MqttPacketSubAck MqttPacketSubAck;
@@ -101,7 +101,7 @@ typedef struct MqttPacketSubAck MqttPacketSubAck;
 struct MqttPacketSubAck
 {
     MqttPacket base;
-    unsigned char returnCode;
+    unsigned char *returnCode;
 };
 
 typedef struct MqttPacketUnsubscribe MqttPacketUnsubscribe;

@@ -29,7 +29,8 @@ struct TestClient
 
     /* OnSubscribe */
     int subId;
-    MqttSubscriptionStatus subStatus;
+    MqttSubscriptionStatus subStatus[16];
+    int subCount;
 
     /* OnPublish */
     int pubId;
@@ -53,6 +54,9 @@ int TestClientConnect(TestClient *client, const char *host, int port,
 void TestClientDisconnect(TestClient *client);
 
 int TestClientSubscribe(TestClient *client, const char *topicFilter, int qos);
+
+int TestClientSubscribeMany(TestClient *client, const char **topicFilter,
+                            int *qos, size_t count);
 
 int TestClientPublish(TestClient *client, int qos, int retain,
                       const char *topic, const char *message);

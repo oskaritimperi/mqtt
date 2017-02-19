@@ -7,11 +7,12 @@ TEST overlapping_subscriptions_test()
 {
     TestClient *client;
     int count;
+    const char *mywildtopics[] = { wildtopics[6], wildtopics[0] };
+    int qos[] = { 2, 1 };
 
     client = TestClientNew("clienta");
     ASSERT(TestClientConnect(client, "localhost", 1883, 60, 1));
-    ASSERT(TestClientSubscribe(client, wildtopics[6], 2));
-    ASSERT(TestClientSubscribe(client, wildtopics[0], 1));
+    ASSERT(TestClientSubscribeMany(client, mywildtopics, qos, 2));
     ASSERT(TestClientPublish(client, 2, 0, topics[3],
                              "overlapping topic filters"));
     ASSERT(TestClientWait(client, 1000));

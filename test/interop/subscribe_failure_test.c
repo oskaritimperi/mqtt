@@ -10,7 +10,7 @@ TEST subscribe_failure_test()
     client = TestClientNew("clienta");
     ASSERT(TestClientConnect(client, "localhost", 1883, 60, 1));
     ASSERT_FALSE(TestClientSubscribe(client, nosubscribe_topics[0], 2));
-    ASSERT_EQ(MqttSubscriptionFailure, client->subStatus);
+    ASSERT_EQ(MqttSubscriptionFailure, client->subStatus[0]);
     TestClientDisconnect(client);
     TestClientFree(client);
 

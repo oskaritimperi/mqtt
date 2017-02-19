@@ -46,19 +46,24 @@ static int MqttPacketConnAckDeserialize(MqttPacketConnAck **packet, Stream *stre
 static int MqttPacketSubAckDeserialize(MqttPacketSubAck **packet, Stream *stream)
 {
     size_t remainingLength = 0;
+    size_t i;
 
     if (StreamReadRemainingLength(&remainingLength, stream) == -1)
-        return -1;
-
-    /* 2 bytes for packet id and 1 byte for single return code */
-    if (remainingLength != 3)
         return -1;
 
     if (StreamReadUint16Be(&((*packet)->base.id), stream) == -1)
         return -1;
 
-    if (StreamRead(&((*packet)->returnCode), 1, stream) == -1)
-        return -1;
+    remainingLength -= 2;
+
+    (*packet)->returnCode = (unsigned char *) malloc(
+        sizeof(*(*packet)->returnCode) * remainingLength);
+
+    for (i = 0; i < remainingLength; ++i)
+    {
+        if (StreamRead(&((*packet)->returnCode[i]), 1, stream) == -1)
+            return -1;
+    }
 
     return 0;
 }

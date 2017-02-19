@@ -14,11 +14,12 @@ static void TestClientOnConnect(MqttClient *client,
 }
 
 static void TestClientOnSubscribe(MqttClient *client, int id,
+                                  const char *filter,
                                   MqttSubscriptionStatus status)
 {
     TestClient *testClient = (TestClient *) MqttClientGetUserData(client);
     testClient->subId = id;
-    testClient->subStatus = status;
+    testClient->subStatus[testClient->subCount++] = status;
 }
 
 static void TestClientOnPublish(MqttClient *client, int id)
@@ -132,6 +133,7 @@ int TestClientSubscribe(TestClient *client, const char *topicFilter, int qos)
     int id = MqttClientSubscribe(client->client, topicFilter, qos);
 
     client->subId = -1;
+    client->subCount = 0;
 
     while (MqttClientRunOnce(client->client, -1) != -1)
     {
@@ -147,7 +149,42 @@ int TestClientSubscribe(TestClient *client, const char *topicFilter, int qos)
         }
     }
 
-    return client->subStatus != MqttSubscriptionFailure;
+    return client->subStatus[0] != MqttSubscriptionFailure;
+}
+
+int TestClientSubscribeMany(TestClient *client, const char **topicFilter,
+                            int *qos, size_t count)
+{
+    int id = MqttClientSubscribeMany(client->client, topicFilter, qos, count);
+    int fail = 0, i;
+
+    client->subId = -1;
+    client->subCount = 0;
+
+    while (MqttClientRunOnce(client->client, -1) != -1)
+    {
+        if (client->subId != -1)
+        {
+            if (client->subId != id)
+            {
+                printf(
+                    "WARNING: subscription id mismatch: expected %d, got %d\n",
+                    id, client->subId);
+            }
+            break;
+        }
+    }
+
+    for (i = 0; i < client->subCount; ++i)
+    {
+        if (client->subStatus[i] == MqttSubscriptionFailure)
+        {
+            fail = 1;
+            break;
+        }
+    }
+
+    return !fail;
 }
 
 int TestClientPublish(TestClient *client, int qos, int retain,

@@ -42,7 +42,16 @@ static size_t MqttPacketConnectGetRemainingLength(const MqttPacketConnect *packe
 
 static size_t MqttPacketSubscribeGetRemainingLength(const MqttPacketSubscribe *packet)
 {
-    return 2 + MqttStringLengthSerialized(packet->topicFilter) + 1;
+    size_t remaining = 2;
+    int i;
+
+    for (i = 0; i < packet->topicFilters->qty; ++i)
+    {
+        remaining += MqttStringLengthSerialized(packet->topicFilters->entry[i]);
+        remaining += 1;
+    }
+
+    return remaining;
 }
 
 static size_t MqttPacketUnsubscribeGetRemainingLength(const MqttPacketUnsubscribe *packet)
@@ -197,14 +206,21 @@ static int MqttPacketConnectSerialize(const MqttPacketConnect *packet, Stream *s
 
 static int MqttPacketSubscribeSerialize(const MqttPacketSubscribe *packet, Stream *stream)
 {
+    int i;
+
     if (MqttPacketWithIdSerialize((const MqttPacket *) packet, stream) == -1)
         return -1;
 
-    if (StreamWriteMqttString(packet->topicFilter, stream) == -1)
-        return -1;
+    for (i = 0; i < packet->topicFilters->qty; ++i)
+    {
+        unsigned char qos = (unsigned char) packet->qos[i];
 
-    if (StreamWrite(&packet->qos, 1, stream) == -1)
-        return -1;
+        if (StreamWriteMqttString(packet->topicFilters->entry[i], stream) == -1)
+            return -1;
+
+        if (StreamWrite(&qos, 1, stream) == -1)
+            return -1;
+    }
 
     return 0;
 }
