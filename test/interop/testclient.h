@@ -2,6 +2,7 @@
 #define TESTCLIENT_H
 
 #include "mqtt.h"
+#include "private.h"
 #include "queue.h"
 
 typedef struct Message Message;

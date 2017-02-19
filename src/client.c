@@ -8,6 +8,7 @@
 #include "serialize.h"
 #include "deserialize.h"
 #include "log.h"
+#include "private.h"
 
 #include "queue.h"
 
@@ -75,6 +76,8 @@ struct MqttClient
     bstring willMessage;
     int willQos;
     int willRetain;
+    /* 1 if client should ignore incoming PUBLISH messages, 0 handle them */
+    int paused;
 };
 
 enum MessageState
@@ -674,6 +677,9 @@ static void MqttClientHandleSubAck(MqttClient *client, MqttPacketSubAck *packet)
 
 static void MqttClientHandlePublish(MqttClient *client, MqttPacketPublish *packet)
 {
+    if (client->paused)
+        return;
+
     if (MqttPacketPublishQos(packet) == 2)
     {
         /* Check if we have sent a PUBREC previously with the same id. If we
@@ -1114,4 +1120,16 @@ static void MqttClientClearQueues(MqttClient *client)
         TAILQ_REMOVE(&client->inMessages, packet, messages);
         MqttPacketFree(packet);
     }
+}
+
+void MqttClientPause(MqttClient *client)
+{
+    assert(client != NULL);
+    client->paused = 1;
+}
+
+void MqttClientResume(MqttClient *client)
+{
+    assert(client != NULL);
+    client->paused = 0;
 }
