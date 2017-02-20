@@ -78,6 +78,8 @@ struct MqttClient
     int willRetain;
     /* 1 if client should ignore incoming PUBLISH messages, 0 handle them */
     int paused;
+    bstring userName;
+    bstring password;
 };
 
 enum MessageState
@@ -274,6 +276,18 @@ int MqttClientConnect(MqttClient *client, const char *host, short port,
 
         packet->connectFlags |= (client->willQos & 3) << 3;
         packet->connectFlags |= (client->willRetain & 1) << 5;
+    }
+
+    if (client->userName)
+    {
+        packet->connectFlags |= 0x80;
+        packet->userName = bstrcpy(client->userName);
+
+        if (client->password)
+        {
+            packet->connectFlags |= 0x40;
+            packet->password = bstrcpy(client->password);
+        }
     }
 
     MqttClientQueuePacket(client, &packet->base);
@@ -590,6 +604,49 @@ int MqttClientSetWill(MqttClient *client, const char *topic, const void *msg,
     client->willMessage = blk2bstr(msg, size);
     client->willQos = qos;
     client->willRetain = retain;
+
+    return 0;
+}
+
+int MqttClientSetAuth(MqttClient *client, const char *userName,
+                      const char *password)
+{
+    assert(client != NULL);
+
+    if (MqttClientIsConnected(client))
+    {
+        LOG_ERROR("MqttClientSetAuth must be called before MqttClientConnect");
+        return -1;
+    }
+
+    if (userName)
+    {
+        if (client->userName)
+            bassigncstr(client->userName, userName);
+        else
+            client->userName = bfromcstr(userName);
+
+        if (password)
+        {
+            if (client->password)
+                bassigncstr(client->password, password);
+            else
+                client->password = bfromcstr(password);
+        }
+        else
+        {
+            bdestroy(client->password);
+            client->password = NULL;
+        }
+    }
+    else
+    {
+        bdestroy(client->userName);
+        client->userName = NULL;
+
+        bdestroy(client->password);
+        client->password = NULL;
+    }
 
     return 0;
 }

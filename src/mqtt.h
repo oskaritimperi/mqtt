@@ -103,6 +103,9 @@ void MqttClientSetMaxQueuedMessages(MqttClient *client, int max);
 int MqttClientSetWill(MqttClient *client, const char *topic, const void *msg,
                       size_t size, int qos, int retain);
 
+int MqttClientSetAuth(MqttClient *client, const char *username,
+                      const char *password);
+
 #if defined(__cplusplus)
 }
 #endif

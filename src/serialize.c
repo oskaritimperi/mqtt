@@ -193,12 +193,12 @@ static int MqttPacketConnectSerialize(const MqttPacketConnect *packet, Stream *s
     {
         if (StreamWriteMqttString(packet->userName, stream) == -1)
             return -1;
-    }
 
-    if (packet->connectFlags & 0x40)
-    {
-        if (StreamWriteMqttString(packet->password, stream) == -1)
-            return -1;
+        if (packet->connectFlags & 0x40)
+        {
+            if (StreamWriteMqttString(packet->password, stream) == -1)
+                return -1;
+        }
     }
 
     return 0;
