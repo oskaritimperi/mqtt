@@ -150,6 +150,8 @@ void MqttClientFree(MqttClient *client)
     bdestroy(client->willTopic);
     bdestroy(client->willMessage);
     bdestroy(client->host);
+    bdestroy(client->userName);
+    bdestroy(client->password);
 
     if (client->stream.sock != -1)
     {
