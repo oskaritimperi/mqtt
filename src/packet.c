@@ -28,41 +28,15 @@ const char *MqttPacketName(int type)
     }
 }
 
-static MQTT_INLINE size_t MqttPacketStructSize(int type)
-{
-    switch (type)
-    {
-        case MqttPacketTypeConnect: return sizeof(MqttPacketConnect);
-        case MqttPacketTypeConnAck: return sizeof(MqttPacketConnAck);
-        case MqttPacketTypePublish: return sizeof(MqttPacketPublish);
-        case MqttPacketTypePubAck:
-        case MqttPacketTypePubRec:
-        case MqttPacketTypePubRel:
-        case MqttPacketTypePubComp: return sizeof(MqttPacket);
-        case MqttPacketTypeSubscribe: return sizeof(MqttPacketSubscribe);
-        case MqttPacketTypeSubAck: return sizeof(MqttPacketSubAck);
-        case MqttPacketTypeUnsubscribe: return sizeof(MqttPacketUnsubscribe);
-        case MqttPacketTypeUnsubAck: return sizeof(MqttPacket);
-        case MqttPacketTypePingReq: return sizeof(MqttPacket);
-        case MqttPacketTypePingResp: return sizeof(MqttPacket);
-        case MqttPacketTypeDisconnect: return sizeof(MqttPacket);
-        default: return (size_t) -1;
-    }
-}
-
 MqttPacket *MqttPacketNew(int type)
 {
     MqttPacket *packet = NULL;
 
-    packet = (MqttPacket *) calloc(1, MqttPacketStructSize(type));
+    packet = (MqttPacket *) calloc(1, sizeof(*packet));
     if (!packet)
         return NULL;
 
     packet->type = type;
-
-    /* this will make sure that TAILQ_PREV does not segfault if a message
-       has not been added to a list at any point */
-    packet->messages.tqe_prev = &packet->messages.tqe_next;
 
     return packet;
 }
@@ -78,52 +52,6 @@ MqttPacket *MqttPacketWithIdNew(int type, uint16_t id)
 
 void MqttPacketFree(MqttPacket *packet)
 {
-    if (MqttPacketType(packet) == MqttPacketTypeConnect)
-    {
-        MqttPacketConnect *p = (MqttPacketConnect *) packet;
-        bdestroy(p->clientId);
-        bdestroy(p->willTopic);
-        bdestroy(p->willMessage);
-        bdestroy(p->userName);
-        bdestroy(p->password);
-    }
-    else if (MqttPacketType(packet) == MqttPacketTypePublish)
-    {
-        MqttPacketPublish *p = (MqttPacketPublish *) packet;
-        bdestroy(p->topicName);
-        bdestroy(p->message);
-    }
-    else if (MqttPacketType(packet) == MqttPacketTypeSubscribe)
-    {
-        MqttPacketSubscribe *p = (MqttPacketSubscribe *) packet;
-        bstrListDestroy(p->topicFilters);
-    }
-    else if (MqttPacketType(packet) == MqttPacketTypeUnsubscribe)
-    {
-        MqttPacketUnsubscribe *p = (MqttPacketUnsubscribe *) packet;
-        bdestroy(p->topicFilter);
-    }
+    bdestroy(packet->payload);
     free(packet);
-}
-
-int MqttPacketHasId(const MqttPacket *packet)
-{
-    switch (packet->type)
-    {
-        case MqttPacketTypePublish:
-            return MqttPacketPublishQos(packet) > 0;
-
-        case MqttPacketTypePubAck:
-        case MqttPacketTypePubRec:
-        case MqttPacketTypePubRel:
-        case MqttPacketTypePubComp:
-        case MqttPacketTypeSubscribe:
-        case MqttPacketTypeSubAck:
-        case MqttPacketTypeUnsubscribe:
-        case MqttPacketTypeUnsubAck:
-            return 1;
-
-        default:
-            return 0;
-    }
 }

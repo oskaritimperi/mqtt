@@ -2,6 +2,7 @@
 #define STREAM_MQTT_H
 
 #include "stream.h"
+#include "stringstream.h"
 
 #include <bstrlib/bstrlib.h>
 

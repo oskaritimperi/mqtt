@@ -29,87 +29,33 @@ enum
     MqttPacketTypeDisconnect = 0xE
 };
 
+enum MqttPacketState
+{
+    MqttPacketStateReadType,
+    MqttPacketStateReadRemainingLength,
+    MqttPacketStateReadPayload,
+    MqttPacketStateReadComplete,
+
+    MqttPacketStateWriteType,
+    MqttPacketStateWriteRemainingLength,
+    MqttPacketStateWritePayload,
+    MqttPacketStateWriteComplete
+};
+
+struct MqttMessage;
+
 typedef struct MqttPacket MqttPacket;
 
 struct MqttPacket
 {
     int type;
-    uint16_t id;
-    int state;
     int flags;
-    int64_t sentAt;
+    int state;
+    uint16_t id;
+    size_t remainingLength;
+    bstring payload;
+    struct MqttMessage *message;
     SIMPLEQ_ENTRY(MqttPacket) sendQueue;
-    TAILQ_ENTRY(MqttPacket) messages;
-};
-
-#define MqttPacketType(packet) (((MqttPacket *) (packet))->type)
-
-#define MqttPacketId(packet) (((MqttPacket *) (packet))->id)
-
-#define MqttPacketSentAt(packet) (((MqttPacket *) (packet))->sentAt)
-
-typedef struct MqttPacketConnect MqttPacketConnect;
-
-struct MqttPacketConnect
-{
-    MqttPacket base;
-    char connectFlags;
-    uint16_t keepAlive;
-    bstring clientId;
-    bstring willTopic;
-    bstring willMessage;
-    bstring userName;
-    bstring password;
-};
-
-typedef struct MqttPacketConnAck MqttPacketConnAck;
-
-struct MqttPacketConnAck
-{
-    MqttPacket base;
-    unsigned char connAckFlags;
-    unsigned char returnCode;
-};
-
-typedef struct MqttPacketPublish MqttPacketPublish;
-
-struct MqttPacketPublish
-{
-    MqttPacket base;
-    bstring topicName;
-    bstring message;
-    char qos;
-    char dup;
-    char retain;
-};
-
-#define MqttPacketPublishQos(p) (((MqttPacketPublish *) p)->qos)
-#define MqttPacketPublishDup(p) (((MqttPacketPublish *) p)->dup)
-#define MqttPacketPublishRetain(p) (((MqttPacketPublish *) p)->retain)
-
-typedef struct MqttPacketSubscribe MqttPacketSubscribe;
-
-struct MqttPacketSubscribe
-{
-    MqttPacket base;
-    struct bstrList *topicFilters;
-    int *qos;
-};
-
-typedef struct MqttPacketSubAck MqttPacketSubAck;
-
-struct MqttPacketSubAck
-{
-    MqttPacket base;
-    unsigned char *returnCode;
-};
-
-typedef struct MqttPacketUnsubscribe MqttPacketUnsubscribe;
-
-struct MqttPacketUnsubscribe
-{
-    MqttPacket base;
-    bstring topicFilter;
 };
 
 const char *MqttPacketName(int type);
@@ -119,7 +65,5 @@ MqttPacket *MqttPacketNew(int type);
 MqttPacket *MqttPacketWithIdNew(int type, uint16_t id);
 
 void MqttPacketFree(MqttPacket *packet);
-
-int MqttPacketHasId(const MqttPacket *packet);
 
 #endif

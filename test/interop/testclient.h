@@ -21,6 +21,8 @@ typedef struct TestClient TestClient;
 
 struct TestClient
 {
+    const char *clientId;
+
     MqttClient *client;
 
     /* OnConnect */
@@ -37,6 +39,9 @@ struct TestClient
 
     /* OnMessage */
     SIMPLEQ_HEAD(messages, Message) messages;
+
+    /* OnUnsubscribe  */
+    int unsubId;
 };
 
 Message *MessageNew(const char *topic, const void *data, size_t size,
@@ -64,5 +69,7 @@ int TestClientPublish(TestClient *client, int qos, int retain,
 int TestClientMessageCount(TestClient *client);
 
 int TestClientWait(TestClient *client, int timeout);
+
+int TestClientUnsubscribe(TestClient *client, const char *topic);
 
 #endif

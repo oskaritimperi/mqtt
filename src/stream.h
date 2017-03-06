@@ -27,9 +27,11 @@ int StreamClose(Stream *stream);
 
 int64_t StreamRead(void *ptr, size_t size, Stream *stream);
 int64_t StreamReadUint16Be(uint16_t *v, Stream *stream);
+int64_t StreamReadByte(unsigned char *byte, Stream *stream);
 
 int64_t StreamWrite(const void *ptr, size_t size, Stream *stream);
 int64_t StreamWriteUint16Be(uint16_t v, Stream *stream);
+int64_t StreamWriteByte(unsigned char byte, Stream *stream);
 
 int StreamSeek(Stream *stream, int64_t offset, int whence);
 

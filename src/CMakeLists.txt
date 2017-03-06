@@ -2,14 +2,14 @@ ADD_SUBDIRECTORY(lib)
 
 ADD_LIBRARY(mqtt STATIC
     client.c
-    deserialize.c
     misc.c
     packet.c
-    serialize.c
     socket.c
     socketstream.c
     stream.c
     stream_mqtt.c
+    stringstream.c
+    message.c
     $<TARGET_OBJECTS:bstrlib>
 )
 

@@ -33,8 +33,8 @@ typedef void (*MqttClientOnConnectCallback)(MqttClient *client,
 
 typedef void (*MqttClientOnSubscribeCallback)(MqttClient *client,
                                               int id,
-                                              const char *topicFilter,
-                                              MqttSubscriptionStatus status);
+                                              int *qos,
+                                              int count);
 
 typedef void (*MqttClientOnUnsubscribeCallback)(MqttClient *client, int id);
 

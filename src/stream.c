@@ -47,6 +47,11 @@ int64_t StreamReadUint16Be(uint16_t *v, Stream *stream)
     return 2;
 }
 
+int64_t StreamReadByte(unsigned char *byte, Stream *stream)
+{
+    return StreamRead(byte, sizeof(*byte), stream);
+}
+
 int64_t StreamWrite(const void *ptr, size_t size, Stream *stream)
 {
     STREAM_CHECK_OP(stream, write);
@@ -63,6 +68,11 @@ int64_t StreamWriteUint16Be(uint16_t v, Stream *stream)
     data[0] = v >> 8;
     data[1] = (unsigned char) (v & 0xFF);
     return StreamWrite(data, sizeof(data), stream);
+}
+
+int64_t StreamWriteByte(unsigned char byte, Stream *stream)
+{
+    return StreamWrite(&byte, sizeof(byte), stream);
 }
 
 int StreamSeek(Stream *stream, int64_t offset, int whence)
