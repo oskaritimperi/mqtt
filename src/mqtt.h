@@ -84,7 +84,7 @@ int MqttClientSubscribe(MqttClient *client, const char *topicFilter,
                         int qos);
 
 int MqttClientSubscribeMany(MqttClient *client, const char **topicFilters,
-  int *qos, size_t count);
+                            int *qos, size_t count);
 
 int MqttClientUnsubscribe(MqttClient *client, const char *topicFilter);
 
