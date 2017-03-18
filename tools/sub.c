@@ -21,11 +21,10 @@ void onConnect(MqttClient *client, MqttConnectionStatus status,
     MqttClientSubscribe(client, options->topic, options->qos);
 }
 
-void onSubscribe(MqttClient *client, int id, const char *filter,
-                 MqttSubscriptionStatus status)
+void onSubscribe(MqttClient *client, int id, int *qos, int count)
 {
     (void) client;
-    printf("onSubscribe id=%d status=%d\n", id, status);
+    printf("onSubscribe id=%d\n", id);
 }
 
 void onMessage(MqttClient *client, const char *topic, const void *data,

@@ -42,37 +42,39 @@ int64_t StreamWriteMqttString(const_bstring buf, Stream *stream)
     return 2 + blength(buf);
 }
 
-int64_t StreamReadRemainingLength(size_t *remainingLength, Stream *stream)
+int64_t StreamReadRemainingLength(size_t *remainingLength, size_t *mul,
+                                  Stream *stream)
 {
-    size_t multiplier = 1;
     unsigned char encodedByte;
-    *remainingLength = 0;
     do
     {
         if (StreamRead(&encodedByte, 1, stream) != 1)
             return -1;
-        *remainingLength += (encodedByte & 127) * multiplier;
-        if (multiplier > 128*128*128)
+        *remainingLength += (encodedByte & 127) * (*mul);
+        if ((*mul) > 128*128*128)
             return -1;
-        multiplier *= 128;
+        (*mul) *= 128;
     }
     while ((encodedByte & 128) != 0);
+    *mul = 0;
     return 0;
 }
 
-int64_t StreamWriteRemainingLength(size_t remainingLength, Stream *stream)
+int64_t StreamWriteRemainingLength(size_t *remainingLength, Stream *stream)
 {
-    size_t nbytes = 0;
     do
     {
-        unsigned char encodedByte = remainingLength % 128;
-        remainingLength /= 128;
-        if (remainingLength > 0)
+        size_t tmp = *remainingLength;
+        unsigned char encodedByte = tmp % 128;
+        tmp /= 128;
+        if (tmp > 0)
             encodedByte |= 128;
         if (StreamWrite(&encodedByte, 1, stream) != 1)
+        {
             return -1;
-        ++nbytes;
+        }
+        *remainingLength = tmp;
     }
-    while (remainingLength > 0);
-    return nbytes;
+    while (*remainingLength > 0);
+    return 0;
 }

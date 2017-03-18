@@ -14,12 +14,15 @@ static void TestClientOnConnect(MqttClient *client,
 }
 
 static void TestClientOnSubscribe(MqttClient *client, int id,
-                                  const char *filter,
-                                  MqttSubscriptionStatus status)
+                                  int *qos, int count)
 {
     TestClient *testClient = (TestClient *) MqttClientGetUserData(client);
     testClient->subId = id;
-    testClient->subStatus[testClient->subCount++] = status;
+    for (testClient->subCount = 0; testClient->subCount < count;
+         ++testClient->subCount)
+    {
+        testClient->subStatus[testClient->subCount] = qos[testClient->subCount];
+    }
 }
 
 static void TestClientOnPublish(MqttClient *client, int id)
@@ -35,6 +38,12 @@ static void TestClientOnMessage(MqttClient *client, const char *topic,
     Message *msg = MessageNew(topic, data, size, qos, retain);
     TestClient *testClient = (TestClient *) MqttClientGetUserData(client);
     SIMPLEQ_INSERT_TAIL(&testClient->messages, msg, chain);
+}
+
+static void TestClientOnUnsubscribe(MqttClient *client, int id)
+{
+    TestClient *testClient = (TestClient *) MqttClientGetUserData(client);
+    testClient->unsubId = id;
 }
 
 Message *MessageNew(const char *topic, const void *data, size_t size,
@@ -69,6 +78,8 @@ TestClient *TestClientNew(const char *clientId)
 {
     TestClient *client = calloc(1, sizeof(*client));
 
+    client->clientId = clientId;
+
     client->client = MqttClientNew(clientId);
 
     MqttClientSetUserData(client->client, client);
@@ -79,6 +90,7 @@ TestClient *TestClientNew(const char *clientId)
     MqttClientSetOnSubscribe(client->client, TestClientOnSubscribe);
     MqttClientSetOnPublish(client->client, TestClientOnPublish);
     MqttClientSetOnMessage(client->client, TestClientOnMessage);
+    MqttClientSetOnUnsubscribe(client->client, TestClientOnUnsubscribe);
 
     SIMPLEQ_INIT(&client->messages);
 
@@ -235,10 +247,34 @@ int TestClientWait(TestClient *client, int timeout)
         printf("TestClientWait timeout:%d rc:%d\n", timeout, rc);
         int64_t now = MqttGetCurrentTime();
         int64_t elapsed = now - start;
-        timeout -= elapsed;
         printf("TestClientWait elapsed:%d\n", (int) elapsed);
+        timeout = timeout - elapsed;
         if (timeout <= 0)
         {
+            break;
+        }
+    }
+
+    return rc != -1;
+}
+
+int TestClientUnsubscribe(TestClient *client, const char *topic)
+{
+    int id = MqttClientUnsubscribe(client->client, topic);
+    int rc;
+
+    client->unsubId = -1;
+
+    while ((rc = MqttClientRunOnce(client->client, -1)) != -1)
+    {
+        if (client->unsubId != -1)
+        {
+            if (client->unsubId != id)
+            {
+                printf(
+                    "WARNING: unsubscribe id mismatch: expected %d, got %d\n",
+                    id, client->unsubId);
+            }
             break;
         }
     }
