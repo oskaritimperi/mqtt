@@ -13,13 +13,13 @@ sources = (
     'log.h',
     'misc.c',
     'lib/bstrlib/bstrlib.c',
+    'socket.c',
     'stream.c',
     'socketstream.c',
+    'stringstream.c',
     'stream_mqtt.c',
-    'socket.c',
     'packet.c',
-    'serialize.c',
-    'deserialize.c',
+    'message.c',
     'client.c'
 )
 
