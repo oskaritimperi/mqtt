@@ -1121,7 +1121,10 @@ static int MqttClientHandlePublish(MqttClient *client)
 
     StreamReadMqttString(&topic, pss);
 
-    StreamReadUint16Be(&id, pss);
+    if (qos > 0)
+    {
+        StreamReadUint16Be(&id, pss);
+    }
 
     payload = bdataofs(ss.buffer, ss.pos);
     payloadSize = blength(ss.buffer) - ss.pos;
