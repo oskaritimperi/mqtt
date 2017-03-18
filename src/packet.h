@@ -53,6 +53,8 @@ struct MqttPacket
     int state;
     uint16_t id;
     size_t remainingLength;
+    size_t remainingLengthMul;
+    /* TODO: maybe switch to have a StringStream here? */
     bstring payload;
     struct MqttMessage *message;
     SIMPLEQ_ENTRY(MqttPacket) sendQueue;

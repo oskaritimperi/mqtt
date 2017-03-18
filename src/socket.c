@@ -6,18 +6,6 @@
 #include <assert.h>
 
 #if defined(_WIN32)
-#include "win32.h"
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#endif
-
-#if defined(_WIN32)
 static int InitializeWsa()
 {
     WSADATA wsa;
@@ -33,9 +21,9 @@ static int InitializeWsa()
 #define close closesocket
 #endif
 
-int SocketConnect(const char *host, short port)
+int SocketConnect(const char *host, short port, int nonblocking)
 {
-    struct addrinfo hints, *servinfo, *p = NULL;
+    struct addrinfo hints, *servinfo = NULL, *p = NULL;
     int rv;
     char portstr[6];
     int sock;
@@ -66,8 +54,16 @@ int SocketConnect(const char *host, short port)
             continue;
         }
 
+        if (nonblocking)
+        {
+            SocketSetNonblocking(sock, 1);
+        }
+
         if (connect(sock, p->ai_addr, p->ai_addrlen) == -1)
         {
+            int err = SocketErrno;
+            if (err == SOCKET_EINPROGRESS)
+                break;
             close(sock);
             continue;
         }
@@ -75,9 +71,12 @@ int SocketConnect(const char *host, short port)
         break;
     }
 
-    freeaddrinfo(servinfo);
-
 cleanup:
+
+    if (servinfo)
+    {
+        freeaddrinfo(servinfo);
+    }
 
     if (p == NULL)
     {
@@ -177,4 +176,46 @@ int SocketSelect(int sock, int *events, int timeout)
     }
 
     return rv;
+}
+
+void SocketSetNonblocking(int sock, int nb)
+{
+#if defined(_WIN32)
+    unsigned int yes = nb;
+    ioctlsocket(s, FIONBIO, &yes);
+#else
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (nb)
+        flags |= O_NONBLOCK;
+    else
+        flags &= ~O_NONBLOCK;
+    fcntl(sock, F_SETFL, flags);
+#endif
+}
+
+int SocketGetOpt(int sock, int level, int name, void *val, int *len)
+{
+#if defined(_WIN32)
+    return getsockopt(sock, level, name, (char *) val, len);
+#else
+    socklen_t _len = *len;
+    int rc = getsockopt(sock, level, name, val, &_len);
+    *len = _len;
+    return rc;
+#endif
+}
+
+int SocketGetError(int sock, int *error)
+{
+    int len = sizeof(*error);
+    return SocketGetOpt(sock, SOL_SOCKET, SO_ERROR, error, &len);
+}
+
+int SocketWouldBlock(int error)
+{
+#if defined(_WIN32)
+    return error == WSAEWOULDBLOCK;
+#else
+    return error == EWOULDBLOCK || error == EAGAIN;
+#endif
 }
