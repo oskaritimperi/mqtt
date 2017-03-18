@@ -20,3 +20,8 @@ ADD_INTEROP_TEST(dollar_topics_test)
 ADD_INTEROP_TEST(username_and_password_test)
 ADD_INTEROP_TEST(ping_test)
 ADD_INTEROP_TEST(unsubscribe_test)
+ADD_INTEROP_TEST(big_message_test)
+
+ADD_LIBRARY(bstraux STATIC bstraux.c)
+TARGET_INCLUDE_DIRECTORIES(bstraux PUBLIC ${PROJECT_SOURCE_DIR}/src/lib/bstrlib)
+TARGET_LINK_LIBRARIES(big_message_test PRIVATE bstraux)
