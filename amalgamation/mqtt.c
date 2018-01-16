@@ -5835,7 +5835,20 @@ int MqttClientRunOnce(MqttClient *client, int timeout)
 
         if (SIMPLEQ_EMPTY(&client->sendQueue))
         {
+            int64_t elapsed;
+
             LOG_DEBUG("nothing to write");
+
+            // If there's nothing to write at this point and we haven't sent
+            // any packets in keepalive seconds, we should send a ping.
+
+            elapsed = MqttGetCurrentTime() - client->lastPacketSentTime;
+            if (client->keepAlive > 0 && elapsed >= client->keepAlive*1000)
+            {
+                MqttClientQueueSimplePacket(client, MqttPacketTypePingReq);
+                client->pingSent = 1;
+                events |= EV_WRITE;
+            }
         }
         else
         {
@@ -5922,15 +5935,6 @@ int MqttClientRunOnce(MqttClient *client, int timeout)
             LOG_ERROR("no PINGRESP received in time");
             client->pingSent = 0;
             client->stopped = 1;
-        }
-        else if (SIMPLEQ_EMPTY(&client->sendQueue))
-        {
-            int64_t elapsed = MqttGetCurrentTime() - client->lastPacketSentTime;
-            if (elapsed/1000 >= client->keepAlive && client->keepAlive > 0)
-            {
-                MqttClientQueueSimplePacket(client, MqttPacketTypePingReq);
-                client->pingSent = 1;
-            }
         }
     }
 
