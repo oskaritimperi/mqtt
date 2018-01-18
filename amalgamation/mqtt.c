@@ -5867,17 +5867,41 @@ int MqttClientRunOnce(MqttClient *client, int timeout)
 
     LOG_DEBUG("selecting");
 
-    if (timeout < 0)
+    // If timeout is not valid, use keepalive
+    if (timeout <= 0)
     {
         timeout = client->keepAlive * 1000;
-        if (timeout == 0)
+    }
+
+    // Timeout cannot be larger than timeout
+    if (timeout > client->keepAlive * 1000)
+    {
+        if (client->keepAlive > 0)
         {
-            timeout = 30 * 1000;
+            timeout = client->keepAlive * 1000;
         }
     }
-    else if (timeout > (client->keepAlive * 1000) && client->keepAlive > 0)
+
+    // If timeout is zero at this point, use default timeout.
+    if (timeout == 0)
     {
-        timeout = client->keepAlive * 1000;
+        timeout = 30 * 1000;
+    }
+
+    // If we are using keepalive with this connection, use a timeout that
+    // expires when the time from last sent packet equals keepalive.
+    if (client->keepAlive > 0)
+    {
+        int elapsed = MqttGetCurrentTime() - client->lastPacketSentTime;
+        int mintimeout = client->keepAlive * 1000 - elapsed;
+        timeout = (mintimeout < timeout) ? mintimeout : timeout;
+        // If timeout is negative, just use the keepalive as timeout. This
+        // situation should have also triggered the ping check above (in
+        // connected state).
+        if (timeout < 0)
+        {
+            timeout = client->keepAlive * 1000;
+        }
     }
 
     rv = SocketSelect(client->stream.sock, &events, timeout);
